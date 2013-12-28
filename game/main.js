@@ -1,10 +1,11 @@
 var canvas, ctx, debug, info = [];
 
-var tileSize  = 64;
-var tileShift = ((Math.log(tileSize)) / (Math.log(2)));
+var tileSize  = 32;
+var tileShift = (Math.log(tileSize) / Math.log(2));
 
-var gameSwitcher;
-var gameInput;
+var inputManager;
+var gameManager;
+var camera;
 var gDebugPaths = 0;
 
 function start()
@@ -15,40 +16,54 @@ function start()
 	
 	ctx.font = '10px Arial';
 	
-	canvas.worldX = 0;
-	canvas.worldY = 0;
-	canvas.mapX = 0;
-	canvas.mapY = 0;
-	canvas.mouseMapX = 0;
-	canvas.mouseMapY = 0;
-
-	gInput = new GameInput();
-	gSwitcher = new GameSwitcher();
-
+	camera = new GameCamera();
+	inputManager = new GameInputManager();
+	gameManager = new GameManager();
+	
 	(function tick() 
     {
 		info = [];
 		
-		gSwitcher.input();
+		gameManager.input();
 		
-		gSwitcher.logic();
+		gameManager.logic();
 		
-		gSwitcher.render();
+		gameManager.render();
 		
-		info.push('Mouse: (' + canvas.mouseMapX + ', ' + canvas.mouseMapY + ')');
+		info.push('Mouse: (' + inputManager.mouseX + ', ' + inputManager.mouseY + ')');
 		info.push('Paths: (' + gDebugPaths + ')');
 		
-		debug.innerHTML = info.join('<br />');
+		debug.innerHTML = info.join(' :: ');
 		
-		if (gSwitcher.done || gInput.done) {
+		if (gameManager.done || inputManager.done) {
 			return;
 		}
 
         requestAnimationFrame(tick);
         
     })();
-	
-	gInput.register();
 }
 
-window.addEventListener('load', start);
+$(document).ready(function () 
+{
+	start();
+	
+	$('button[name="tileSize+"]').click(function () {
+		tileSize <<= 1;
+		if (tileSize > 64) {
+			tileSize = 64;
+		}
+		tileShift = (Math.log(tileSize) / Math.log(2));
+		gameManager.currentState.player.setMapCoords();
+	});
+	
+	$('button[name="tileSize-"]').click(function () {
+		tileSize >>= 1;
+		if (tileSize < 16) {
+			tileSize = 16;
+		}
+		tileShift = (Math.log(tileSize) / Math.log(2));
+		gameManager.currentState.player.setMapCoords();
+	});
+	
+});

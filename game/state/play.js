@@ -2,23 +2,40 @@ function GameStatePlay()
 {
 	this.mapRenderer = new GameMap();
 	this.player = new GamePlayer(this.mapRenderer);
+	
+	camera.follow(this.player);
 }
 
 GameStatePlay.prototype.input = function()
 {
+	if (this.mapRenderer.mapIsLoaded === false) {
+		return;
+	}
+	
 	this.player.input();
 }
 
 GameStatePlay.prototype.logic = function()
 {
+	if (this.mapRenderer.mapIsLoaded === false) {
+		return;
+	}
+	
 	this.player.logic();
 }
 
 GameStatePlay.prototype.render = function()
 {
-	this.mapRenderer.render();
+    ctx.save();
+    
+    if (this.mapRenderer.mapIsLoaded === false) {
+		this.mapRenderer.renderLoading();
+	} else {
+		this.mapRenderer.render();
+		this.player.render();
+	}
 	
-	this.player.render();
+	ctx.restore();
 }
 
 GameStatePlay.prototype.getRequestedGameState = function()

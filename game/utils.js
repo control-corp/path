@@ -1,9 +1,9 @@
 function isInsideCanvas(worldX, worldY, width, height)
 {
-	return -canvas.worldX + worldX + width > 0 
-		   && -canvas.worldY + worldY + height > 0 
-		   && -canvas.worldX + worldX < canvas.width 
-		   && -canvas.worldY + worldY < canvas.height;
+	return -camera.x + worldX + width > 0 
+		   && -camera.y + worldY + height > 0 
+		   && -camera.x + worldX < canvas.width 
+		   && -camera.y + worldY < canvas.height;
 }
 
 function xyToIdx(x, y, w)

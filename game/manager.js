@@ -1,15 +1,15 @@
-function GameSwitcher()
+function GameManager()
 {
 	this.currentState = new GameStatePlay();
 	this.done = false;
 }
 
-GameSwitcher.prototype.input = function()
+GameManager.prototype.input = function()
 {
 	this.currentState.input();
 }
 
-GameSwitcher.prototype.logic = function()
+GameManager.prototype.logic = function()
 {
 	var newState = this.currentState.getRequestedGameState();
 	
@@ -20,16 +20,18 @@ GameSwitcher.prototype.logic = function()
 	
 	this.currentState.logic();
 	
+	camera.logic();
+	
 	this.done = this.currentState.isExitRequested();
 }
 
-GameSwitcher.prototype.render = function()
+GameManager.prototype.render = function()
 {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	
-    ctx.save();
+	ctx.save();
     
-    ctx.translate(-canvas.worldX, -canvas.worldY);
+	ctx.translate(-camera.x, -camera.y);
     
 	this.currentState.render();
 	

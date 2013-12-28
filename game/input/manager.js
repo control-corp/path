@@ -1,4 +1,4 @@
-function GameInput()
+function GameInputManager()
 {
 	this.done = false;
 	
@@ -11,23 +11,28 @@ function GameInput()
 		39 : 'right',
 		40 : 'down'
 	};
+	
+	this.register();
+	
+	this.mouseX = 0;
+	this.mouseY = 0;
 }
 
-GameInput.prototype.onKeyDown = function(e)
+GameInputManager.prototype.onKeyDown = function(e)
 {
 	if (this.keys[e.keyCode]) {
 		this.pressed[this.keys[e.keyCode]] = true;
 	}
 }
 
-GameInput.prototype.onKeyUp = function(e)
+GameInputManager.prototype.onKeyUp = function(e)
 {
 	if (this.keys[e.keyCode]) {
 		this.pressed[this.keys[e.keyCode]] = false;
 	}
 }
 	
-GameInput.prototype.onMouseDown = function(e)
+GameInputManager.prototype.onMouseDown = function(e)
 {
 	e.preventDefault();
 	
@@ -36,7 +41,7 @@ GameInput.prototype.onMouseDown = function(e)
 	this.calcMouseCoords(e);
 }
 
-GameInput.prototype.onMouseUp = function(e)
+GameInputManager.prototype.onMouseUp = function(e)
 {
 	e.preventDefault();
 	
@@ -45,21 +50,21 @@ GameInput.prototype.onMouseUp = function(e)
 	this.calcMouseCoords(e);
 }
 
-GameInput.prototype.onMouseMove = function(e)
+GameInputManager.prototype.onMouseMove = function(e)
 {
 	e.preventDefault();
 
 	this.calcMouseCoords(e);
 }
 
-GameInput.prototype.onWindowClick = function(e)
+GameInputManager.prototype.onWindowClick = function(e)
 {
 	this.pressed['mouse'] = false;
 }
 
 // Touches
 
-GameInput.prototype.onTouchStart = function(e)
+GameInputManager.prototype.onTouchStart = function(e)
 {
 	e.preventDefault(); 
 	
@@ -68,14 +73,14 @@ GameInput.prototype.onTouchStart = function(e)
 	this.calcMouseCoords(e, true);
 }
 
-GameInput.prototype.onTouchMove = function(e)
+GameInputManager.prototype.onTouchMove = function(e)
 {
 	e.preventDefault(); 
 
 	this.calcMouseCoords(e, true);
 }
 
-GameInput.prototype.onTouchEnd = function(e)
+GameInputManager.prototype.onTouchEnd = function(e)
 {
 	e.preventDefault(); 
 	
@@ -84,7 +89,7 @@ GameInput.prototype.onTouchEnd = function(e)
 	this.calcMouseCoords(e, true);
 }
 
-GameInput.prototype.calcMouseCoords = function(e, isTouch) 
+GameInputManager.prototype.calcMouseCoords = function(e, isTouch) 
 {
 	var ex, ey;
 	
@@ -100,15 +105,15 @@ GameInput.prototype.calcMouseCoords = function(e, isTouch)
 	var left = (doc && doc.scrollLeft || body && body.scrollLeft || 0);
 	var top = (doc && doc.scrollTop  || body && body.scrollTop  || 0);
 	var rect = canvas.getBoundingClientRect();
+
+	var wx = ex - rect.left - left + (camera ? (camera.x || 0) : 0);
+	var wy = ey - rect.top - top + (camera ? (camera.y || 0) : 0);
 	
-	var wx = ex - rect.left - left + canvas.worldX;
-	var wy = ey - rect.top - top + canvas.worldY;
-	
-	canvas.mouseMapX = wx >> tileShift;
-	canvas.mouseMapY = wy >> tileShift;
+	this.mouseX = wx >> tileShift;
+	this.mouseY = wy >> tileShift;
 }
 
-GameInput.prototype.register = function()
+GameInputManager.prototype.register = function()
 {
 	var self = this;
 	

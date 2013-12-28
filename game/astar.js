@@ -16,12 +16,15 @@ AStar.prototype.heuristic = function(from, to)
 		return D * this.heuristicCallback(dx, dy);
 	}
 	
-	return D * (dx + dy);
+	return D * Math.max(dx, dy);
+	//return D * (dx + dy);
+	//return D * Math.sqrt(dx * dx + dy * dy);
+	//return D * (dx * dx + dx * dy);
 }
 
 AStar.prototype.findPath = function(start, end, limit) 
 {
-	var limit = (limit || 100), 
+	var limit = (limit || 1000), 
 		open = [], 
 		close = [], 
 		lowest_score, 
@@ -133,8 +136,8 @@ AStar.prototype.constructPath = function(node, start, end, set)
 	
 	while (node.x != start.x || node.y != start.y) {
 		path.push({
-			worldX : node.x * tileSize, 
-			worldY : node.y * tileSize
+			x : node.x, 
+			y : node.y
 		});
 		node = this.findInSet(node, set).parent;
 	}

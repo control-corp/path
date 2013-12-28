@@ -36,7 +36,7 @@
             <button name="delete">delete</button>
             Cell type:
             Obstacle: <input type="radio" name="cellType" value="1" checked="checked" />
-            Goal: <input type="radio" name="cellType" value="2" />
+            Portal: <input type="radio" name="cellType" value="2" />
         </div>
 		<canvas id="canvas"></canvas>
     </body>

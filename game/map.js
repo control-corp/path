@@ -46,7 +46,9 @@ GameMap.prototype.setMap = function(map)
 				}
 			}
 		}
-		self.mapIsLoaded = true;
+		setTimeout(function () {
+			self.mapIsLoaded = true;
+		}, 0);
 	});
 }
 
@@ -54,19 +56,17 @@ GameMap.prototype.findPath = function(from, to)
 {
 	var path = [];
 	
-	if (to.mapX < 0 || to.mapY < 0) {
-		return path;
-	}
-	
-	if (to.mapX >= this.grid.w || to.mapY >= this.grid.h) {
-		return path;
-	}
-	
-	if (from.mapX == to.mapX && from.mapY == to.mapY) {
+	if (to === undefined 
+		|| to.x < 0 
+		|| to.y < 0
+		|| to.x >= this.grid.w 
+		|| to.y >= this.grid.h
+		|| (from.x == to.x && from.y == to.y)
+	) {
 		return path;
 	}
 		
-	var idx = (to.mapX + (to.mapY * this.grid.w));
+	var idx = (to.x + (to.y * this.grid.w));
 	
 	if (this.grid.data[idx] !== undefined && !this.grid.data[idx].isWalkable()) {
 		return path;
@@ -76,11 +76,8 @@ GameMap.prototype.findPath = function(from, to)
 		return path;
 	}
 	
-	path = this.pathFinder.findPath(
-		{x: from.mapX, y: from.mapY}, 
-		{x: to.mapX, y: to.mapY}
-	);
-	
+	path = this.pathFinder.findPath(from, to);
+
 	gDebugPaths++;
 	
 	return path;
@@ -91,31 +88,37 @@ GameMap.prototype.logic = function()
 
 }
 
+GameMap.prototype.renderLoading = function()
+{
+	ctx.save();
+	ctx.font = '30px Calibri';
+	ctx.fillStyle = 'white';
+	ctx.textAlign = 'center';
+	ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
+	ctx.restore();
+}
+
 GameMap.prototype.render = function()
 {
-	if (this.mapIsLoaded === false) {
-		return;
-	}
-
 	ctx.save();
 
-	var startX = canvas.mapX;
-	var startY = canvas.mapY;
-	var endX   = startX + (canvas.width / tileSize)  + 1;
-	var endY   = startY + (canvas.height / tileSize) + 1;
-	var c = 0;
-	var cell;
-	var wx, wy, idx;
+	var startX = camera.x >> tileShift;
+	var startY = camera.y >> tileShift;
+	
+	var endX = startX + (canvas.width >> tileShift)  + 1;
+	var endY = startY + (canvas.height >> tileShift) + 1;
+
+	var c = 0, cell, wx, wy, idx;
 
 	for (var y = startY; y < endY; y++) {
 		for (var x = startX; x < endX; x++) {
 			
-			wx = x * tileSize;
-			wy = y * tileSize;
-			
 			if (x < 0 || y < 0 || x >= this.grid.w || y >= this.grid.h) {
 				continue;
 			}
+			
+			wx = x * tileSize;
+			wy = y * tileSize;
 			
 			idx = (x + (y * this.grid.w));
 			
