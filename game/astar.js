@@ -1,9 +1,9 @@
 function AStar(params)
 {
-	this.map               = params.map || null;
+	this.map               = params.map || undefined;
 	this.allowDiagonal     = params.allowDiagonal || true;
 	this.dontCrossCorners  = params.dontCrossCorners || true;
-	this.heuristicCallback = params.heuristic || null;
+	this.heuristicCallback = params.heuristic || undefined;
 }
 
 AStar.prototype.heuristic = function(from, to)
@@ -12,14 +12,13 @@ AStar.prototype.heuristic = function(from, to)
 	var dy = Math.abs(to.y - from.y);
 	var D  = 8;
 
-	if (this.heuristicCallback !== null) {
+	if (this.heuristicCallback !== undefined) {
 		return D * this.heuristicCallback(dx, dy);
 	}
 	
-	return D * Math.max(dx, dy);
+	//return D * Math.max(dx, dy);
 	//return D * (dx + dy);
-	//return D * Math.sqrt(dx * dx + dy * dy);
-	//return D * (dx * dx + dx * dy);
+	return D * Math.sqrt(dx * dx + dy * dy);
 }
 
 AStar.prototype.findPath = function(start, end, limit) 
@@ -117,12 +116,8 @@ AStar.prototype.findPath = function(start, end, limit)
 AStar.prototype.constructPath = function(node, start, end, set)
 {
 	var path = [];
-	
+
 	if (node.x != end.x || node.y != end.y) {
-		return path;
-	}
-	
-	/*if (node.x != end.x || node.y != end.y) {
 		var lowest_score = 1E+37;
 		var lowest_node  = null;
 		for (i = 0, l = set.length; i < l; ++i) {
@@ -132,7 +127,7 @@ AStar.prototype.constructPath = function(node, start, end, set)
 			}
 		}
 		node = lowest_node;
-	}*/
+	}
 	
 	while (node.x != start.x || node.y != start.y) {
 		path.push({

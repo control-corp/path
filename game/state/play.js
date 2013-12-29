@@ -1,7 +1,8 @@
 function GameStatePlay()
 {
-	this.mapRenderer = new GameMap();
+	this.mapRenderer = new GameMap(this);
 	this.player = new GamePlayer(this.mapRenderer);
+	this.done = false;
 	
 	camera.follow(this.player);
 }
@@ -32,7 +33,6 @@ GameStatePlay.prototype.render = function()
 		this.mapRenderer.renderLoading();
 	} else {
 		this.mapRenderer.render();
-		this.player.render();
 	}
 	
 	ctx.restore();
@@ -40,10 +40,10 @@ GameStatePlay.prototype.render = function()
 
 GameStatePlay.prototype.getRequestedGameState = function()
 {
-	return null;
+	return this.requestedGameState;
 }
 
 GameStatePlay.prototype.isExitRequested = function()
 {
-	return false;
+	return this.done;
 }

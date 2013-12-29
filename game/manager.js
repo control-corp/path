@@ -7,13 +7,19 @@ function GameManager()
 GameManager.prototype.input = function()
 {
 	this.currentState.input();
+	
+	return this;
 }
 
 GameManager.prototype.logic = function()
 {
+	if (this.done === true) {
+		return this;
+	}
+	
 	var newState = this.currentState.getRequestedGameState();
 	
-	if (newState !== null) {
+	if (newState !== undefined) {
 		delete this.currentState;
 		this.currentState = newState;
 	}
@@ -23,10 +29,16 @@ GameManager.prototype.logic = function()
 	camera.logic();
 	
 	this.done = this.currentState.isExitRequested();
+	
+	return this;
 }
 
 GameManager.prototype.render = function()
 {
+	if (this.done === true) {
+		return this;
+	}
+	
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	
 	ctx.save();
@@ -36,4 +48,6 @@ GameManager.prototype.render = function()
 	this.currentState.render();
 	
 	ctx.restore();
+	
+	return this;
 }

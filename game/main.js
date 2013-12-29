@@ -6,36 +6,32 @@ var tileShift = (Math.log(tileSize) / Math.log(2));
 var inputManager;
 var gameManager;
 var camera;
-var gDebugPaths = 0;
+
+var globalData = {
+	paths: 0
+};
 
 function start()
 {
-	debug  = document.getElementById('debug');
-	canvas = document.getElementById('canvas');
-	ctx    = canvas.getContext('2d');
-	
-	ctx.font = '10px Arial';
-	
-	camera = new GameCamera();
+	camera       = new GameCamera();
 	inputManager = new GameInputManager();
-	gameManager = new GameManager();
+	gameManager  = new GameManager();
 	
 	(function tick() 
     {
 		info = [];
 		
-		gameManager.input();
-		
-		gameManager.logic();
-		
-		gameManager.render();
+		gameManager.input()
+				   .logic()
+				   .render();
 		
 		info.push('Mouse: (' + inputManager.mouseX + ', ' + inputManager.mouseY + ')');
-		info.push('Paths: (' + gDebugPaths + ')');
+		info.push('Paths: (' + globalData.paths + ')');
 		
-		debug.innerHTML = info.join(' :: ');
+		debug.innerHTML = info.join('<br />');
 		
 		if (gameManager.done || inputManager.done) {
+			console.log('Exit...');
 			return;
 		}
 
@@ -46,24 +42,49 @@ function start()
 
 $(document).ready(function () 
 {
-	start();
+	debug  = document.getElementById('debug');
+	canvas = document.getElementById('canvas');
+	ctx    = canvas.getContext('2d');
 	
-	$('button[name="tileSize+"]').click(function () {
-		tileSize <<= 1;
-		if (tileSize > 64) {
-			tileSize = 64;
+	ctx.font = '10px Verdana';
+
+	Loader.load([
+        'grassland.png'
+    ], function () {
+		start();
+	});
+	
+	$('button[name="speed+"]').click(function () {
+		if (!Loader.isCompleted) {
+			return;
 		}
-		tileShift = (Math.log(tileSize) / Math.log(2));
+		if (gameManager.currentState.player.isMoving === true) {
+			alert('Player is moving');
+			return;
+		}
+		var speed = gameManager.currentState.player.speed;
+		speed++;
+		if (speed > 10) {
+			speed = 10;
+		}
+		gameManager.currentState.player.speed = speed;
 		gameManager.currentState.player.setMapCoords();
 	});
 	
-	$('button[name="tileSize-"]').click(function () {
-		tileSize >>= 1;
-		if (tileSize < 16) {
-			tileSize = 16;
+	$('button[name="speed-"]').click(function () {
+		if (!Loader.isCompleted) {
+			return;
 		}
-		tileShift = (Math.log(tileSize) / Math.log(2));
+		if (gameManager.currentState.player.isMoving === true) {
+			alert('Player is moving');
+			return;
+		}
+		var speed = gameManager.currentState.player.speed;
+		speed--;
+		if (speed < 1) {
+			speed = 1;
+		}
+		gameManager.currentState.player.speed = speed;
 		gameManager.currentState.player.setMapCoords();
 	});
-	
 });

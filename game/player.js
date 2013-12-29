@@ -2,23 +2,29 @@ function GamePlayer(mapRenderer)
 {
 	this.x, 
 	this.y, 
+	this.z = 100,
 	this.worldX, 
 	this.worldY,
-	this.speed = 5,
+	this.idx = 0,
+	this.speed = 3,
 	this.target = undefined,
 	this.newTarget = undefined,
 	this.pathFollower = undefined,
 	this.pathCurrent = 0,
-	this.mapRenderer = mapRenderer
+	this.mapRenderer = mapRenderer,
+	this.forcedStop = false;
+	this.isMoving = false;
 	;
-	
-	this.setMapCoords(0, 0);
 }
 
 GamePlayer.prototype.input = function()
 {
-	if (inputManager.pressed['mouse']) {
+	if (inputManager.pressed['mouse'] === true) {
 		this.setTarget();
+	}
+	
+	if (inputManager.pressed['esc'] === true && this.isMoving === true) {
+		this.forcedStop = true;
 	}
 }
 
@@ -27,16 +33,19 @@ GamePlayer.prototype.move = function()
 	if (this.pathFollower === undefined) {
 		this.pathFollower = this.mapRenderer.findPath(this, this.target);
 		if (this.pathFollower.length === 0) {
-			return this._stopMove();
+			return this.stopMove();
 		}
 	}
-
+	
 	var nextWorldX = this.pathFollower[this.pathCurrent].x * tileSize;
 	var nextWorldY = this.pathFollower[this.pathCurrent].y * tileSize;
 	
 	if (this.pathCurrent < this.pathFollower.length) {
 		if (Math.abs(this.worldX - nextWorldX) < this.speed && Math.abs(this.worldY - nextWorldY) < this.speed) {
 			this.pathCurrent++;
+			if (this.forcedStop) {
+				return this.stopMove();
+			}
 			if (this._checkForNewTarget()) {
 				return true;
 			}
@@ -45,7 +54,7 @@ GamePlayer.prototype.move = function()
 
 	if (this.pathFollower[this.pathCurrent] === undefined) {
 		this.checkEvents();
-		return this._stopMove();
+		return this.stopMove();
 	}
 	
 	return this._move();
@@ -58,7 +67,7 @@ GamePlayer.prototype._checkForNewTarget = function()
 	if (this.newTarget !== undefined) {
 		path = this.mapRenderer.findPath(this, this.newTarget);
 		if (path.length) {
-			this._stopMove(path, this.newTarget);
+			this.stopMove(path, this.newTarget);
 			return true;
 		}
 	}
@@ -66,18 +75,22 @@ GamePlayer.prototype._checkForNewTarget = function()
 	return false;
 }
 
-GamePlayer.prototype._stopMove = function(newPath, newTarget)
+GamePlayer.prototype.stopMove = function(newPath, newTarget)
 {
 	this.pathFollower = newPath || undefined;
 	this.target = newTarget || undefined;
 	this.newTarget = undefined;
 	this.pathCurrent = 0;
+	this.forcedStop = false;
+	this.isMoving = false;
 	
 	return true;
 }
 
 GamePlayer.prototype._move = function()
 {
+	this.isMoving = true;
+	
 	var nextWorldX = this.pathFollower[this.pathCurrent].x * tileSize;
 	var nextWorldY = this.pathFollower[this.pathCurrent].y * tileSize;
 
@@ -91,6 +104,9 @@ GamePlayer.prototype._move = function()
 		this.worldY = nextWorldY;
 		this.x = this.worldX >> tileShift;
 		this.y = this.worldY >> tileShift;
+		if (this.mapRenderer.grid.w) {
+			this.idx = this.x + (this.y * this.mapRenderer.grid.w);
+		}
 	}
 	
 	return true;
@@ -112,10 +128,16 @@ GamePlayer.prototype.setTarget = function()
 		this.target = {};
 		this.target.x = toX;
 		this.target.y = toY;
+		if (this.mapRenderer.grid.w) {
+			this.target.idx = toX + (toY * this.mapRenderer.grid.w);
+		}
 	} else {
 		this.newTarget = {};
 		this.newTarget.x = toX;
 		this.newTarget.y = toY;
+		if (this.mapRenderer.grid.w) {
+			this.newTarget.idx = toX + (toY * this.mapRenderer.grid.w);
+		}
 	}
 }
 
@@ -131,7 +153,10 @@ GamePlayer.prototype.render = function()
 	ctx.save();
     ctx.beginPath();
     ctx.arc(this.worldX + tileSize / 2, this.worldY + tileSize / 2, tileSize / 4, 0, 2 * Math.PI);
-    ctx.lineWidth = 1;
+    ctx.fillStyle = 'red';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'black';
     ctx.stroke();
     ctx.restore();
     
@@ -140,26 +165,34 @@ GamePlayer.prototype.render = function()
 	ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
 	ctx.restore();*/
 	
-	info.push('Player: (' + this.x + ', ' + this.y + ')');
+	info.push('Player: (' + this.x + ', ' + this.y + '), idx: ' + this.idx + ', speed: ' + this.speed + ', isMoving: ' + Number(this.isMoving));
 	
 	if (this.target !== undefined) {
-		info.push('Target: (' + this.target.x + ', ' + this.target.y + ')');
+		info.push('Target: (' + this.target.x + ', ' + this.target.y + '), idx: ' + this.target.idx);
 	}
 }
 
 GamePlayer.prototype.checkEvents = function()
 {
-	var idx = (this.target.x + (this.target.y * this.mapRenderer.grid.w));
+	var obj = this.mapRenderer.grid.objects[this.target.idx];
 	
-	if (!(idx in this.mapRenderer.grid.data)) {
-		return;
-	}
-	
-	var cell = this.mapRenderer.grid.data[idx];
-	
-	if (cell.isPortal()) {
-		this.setMapCoords(0, 0);
-		this.mapRenderer.setMap(idx + '.json');
+	if (obj !== undefined) {
+		switch (obj.type) {
+			case 'portal' :
+				var data = obj.data.split(',');
+				if (data[2]) {
+					this.mapRenderer.setMap(data[2], function (map) {
+						map.scene.player.setMapCoords(data[0], data[1]);
+					});
+				} else {
+					this.setMapCoords(data[0], data[1]);
+				}
+				break;
+			case 'goal' :
+				alert('Ta daa');
+				gameManager.currentState.done = true;
+				break;
+		}
 	}
 }
 
@@ -173,9 +206,13 @@ GamePlayer.prototype.setMapCoords = function(x, y)
 		y = this.y;
 	}
 
-	this.x = x;
-	this.y = y;
+	this.x = parseInt(x);
+	this.y = parseInt(y);
 	
 	this.worldX = x * tileSize;
 	this.worldY = y * tileSize;
+	
+	if (this.mapRenderer.grid.w) {
+		this.idx = this.x + (this.y * this.mapRenderer.grid.w);
+	}
 }

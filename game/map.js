@@ -1,54 +1,39 @@
-var MAP_CELL_OBSTACLE = 1;
-var MAP_CELL_PORTAL   = 2;
-
-function GameMapCell(value)
+function GameMap(scene)
 {
-	if (value instanceof Array) {
-		this.value  = parseInt(value[0]);
-		this.params = value[1]; 
-	} else {
-		this.value = parseInt(value);
-	}
-}
-
-GameMapCell.prototype.isWalkable = function()
-{
-	return (this.value !== MAP_CELL_OBSTACLE);
-}
-
-GameMapCell.prototype.isPortal = function()
-{
-	return (this.value === MAP_CELL_PORTAL);
-}
-
-function GameMap()
-{
-	this.setMap('map.json');
+	this.scene = scene;
 	
-	this.pathFinder = new AStar({map: this});
+	this.grid = {};
+	
+	this.mapIsLoaded = false;
+
+	this.pathFinder = new AStar({
+		map: this
+	});
+	
+	this.initMap('map');
 }
 
-GameMap.prototype.setMap = function(map)
+GameMap.prototype.initMap = function(map)
+{
+	this.setMap(map, function (map) {
+		map.scene.player.setMapCoords(0, 0);
+	});
+}
+
+GameMap.prototype.setMap = function(map, onLoad)
 {
 	this.grid = {};
 	this.mapIsLoaded = false;
+	this.mapName = map;
 	
 	var self = this;
-	
-	$.getJSON('game/maps/' + map + '?r' + new Date().getTime(), function (response) {
-		var idx, x, y, w, h;
+
+	$.getJSON('game/maps/' + map + '.json?r' + new Date().getTime(), function (response) {
 		self.grid = response;
-		for (y = 0, h = self.grid.h; y < h; y++) {
-			for (x = 0, w = self.grid.w; x < w; x++) {
-				idx = (x + (y * w));
-				if (self.grid.data[idx] !== undefined) {
-					self.grid.data[idx] = new GameMapCell(self.grid.data[idx]);
-				}
-			}
+		self.mapIsLoaded = true;
+		if (typeof onLoad === 'function') {
+			onLoad(self);
 		}
-		setTimeout(function () {
-			self.mapIsLoaded = true;
-		}, 0);
 	});
 }
 
@@ -61,26 +46,24 @@ GameMap.prototype.findPath = function(from, to)
 		|| to.y < 0
 		|| to.x >= this.grid.w 
 		|| to.y >= this.grid.h
+		|| this.grid.collision[to.y] === undefined
+		|| this.grid.collision[to.y][to.x] === undefined
 		|| (from.x == to.x && from.y == to.y)
 	) {
 		return path;
 	}
-		
-	var idx = (to.x + (to.y * this.grid.w));
-	
-	if (this.grid.data[idx] !== undefined && !this.grid.data[idx].isWalkable()) {
+
+	if (this.grid.collision[to.y][to.x] === 1) {
 		return path;
 	}
 
-	if (this.pathFinder.map === null) {
+	if (this.pathFinder.map === undefined) {
 		return path;
 	}
 	
-	path = this.pathFinder.findPath(from, to);
-
-	gDebugPaths++;
+	globalData.paths++;
 	
-	return path;
+	return this.pathFinder.findPath(from, to);
 }
 
 GameMap.prototype.logic = function()
@@ -91,64 +74,69 @@ GameMap.prototype.logic = function()
 GameMap.prototype.renderLoading = function()
 {
 	ctx.save();
-	ctx.font = '30px Calibri';
-	ctx.fillStyle = 'white';
+	ctx.font = '20px Verdana';
+	ctx.fillStyle = 'blue';
 	ctx.textAlign = 'center';
-	ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
+	ctx.fillText('Loading "' + this.mapName + '" ...', canvas.width / 2, canvas.height / 2);
 	ctx.restore();
 }
 
 GameMap.prototype.render = function()
 {
-	ctx.save();
-
-	var startX = camera.x >> tileShift;
-	var startY = camera.y >> tileShift;
+	var startX = (camera.x >> tileShift);
+	var startY = (camera.y >> tileShift);
 	
-	var endX = startX + (canvas.width >> tileShift)  + 1;
-	var endY = startY + (canvas.height >> tileShift) + 1;
+	var endX = startX + (canvas.width >> tileShift);
+	var endY = startY + (canvas.height >> tileShift);
 
-	var c = 0, cell, wx, wy, idx;
+	var wx, wy, idx, obj, gameObject;
 
-	for (var y = startY; y < endY; y++) {
-		for (var x = startX; x < endX; x++) {
-			
+	var objects = [];
+	
+	for (var y = startY - 1; y < endY + 3; y++) {
+		for (var x = startX - 1; x < endX + 3; x++) {
 			if (x < 0 || y < 0 || x >= this.grid.w || y >= this.grid.h) {
 				continue;
 			}
-			
 			wx = x * tileSize;
 			wy = y * tileSize;
-			
-			idx = (x + (y * this.grid.w));
-			
-			if (this.grid.data[idx] !== undefined) {
-				cell = this.grid.data[idx];
-				if (cell.isWalkable()) {
-					if (cell.isPortal()) {
-						ctx.fillStyle = 'yellow';
-						ctx.fillRect(wx, wy, tileSize, tileSize);
-						c++;
-					}
-				} else {
-					ctx.fillStyle = 'black';
-					ctx.fillRect(wx, wy, tileSize, tileSize);
-					c++;
-				}
-			} else {
-				ctx.fillStyle = 'white';
-				ctx.fillRect(wx, wy, tileSize, tileSize);
-				//ctx.strokeStyle = 'black';
-				//ctx.strokeRect(wx, wy, tileSize, tileSize);
+			idx = x + (y * this.grid.w);
+			obj = this.grid.objects[idx];
+			if (obj !== undefined) {
+				gameObject = new GameMapObject();
+				gameObject.type = obj.type;
+				gameObject.x = x;
+				gameObject.y = y;
+				gameObject.z = OBJECT_TYPES[obj.type].z || 0;
+				gameObject.worldX = wx,
+				gameObject.worldY = wy
+				objects.push(gameObject);
 			}
-			
-			//ctx.fillText(idx, wx + 2, wy + 10);
 		}
 	}
 	
+	objects.push(this.scene.player);
+	
+	objects.sort(sortZIndex);
+
+	ctx.save();
+	
+	objects.forEach(function (obj) {
+		if (obj.render && typeof obj.render === 'function') {
+			obj.render();
+		}
+	});
+
 	ctx.restore();
 	
-	info.push('Objects: ' + c);
+	info.push('Objects: ' + objects.length);
+	
+	delete objects;
+}
+
+GameMap.prototype.drawObject = function()
+{
+	
 }
 
 GameMap.prototype.getNeighbours = function(node, allowDiagonal, dontCrossCorners) 
@@ -157,97 +145,136 @@ GameMap.prototype.getNeighbours = function(node, allowDiagonal, dontCrossCorners
 		s0 = false, d0 = false,
 		s1 = false, d1 = false,
 		s2 = false, d2 = false,
-		s3 = false, d3 = false;
+		s3 = false, d3 = false
+		;
 	
-	var i, 
-		dir, 
-		directions = [], 
-		w = this.grid.w,
-		h = this.grid.h,
-		idx;
+	var x = node.x,
+		y = node.y
+		;
 	
 	// north
-	var north = {x: node.x, y: node.y - 1};
-	idx = (north.x + (north.y * w));
-	
-	if (north.y >= 0 && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-		neighbours.push({x: north.x, y: north.y});
+	if (this.grid.collision[y - 1] !== undefined 
+		&& this.grid.collision[y - 1][x] === 0
+	) {
+		neighbours.push({
+			x: x, 
+			y: y - 1
+		});
 		s3 = true;
 	}
 	
 	// east
-	var east = {x: node.x + 1, y: node.y};
-	idx = (east.x + (east.y * w));
-	
-	if (east.x < w && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-		neighbours.push({x: east.x, y: east.y});
+	if (this.grid.collision[y][x + 1] !== undefined
+		&& this.grid.collision[y][x + 1] === 0
+	) {
+		neighbours.push({
+			x: x + 1, 
+			y: y
+		});
 		s2 = true;
 	}
 	
 	// south
-	var south = {x: node.x, y: node.y + 1};
-	idx = (south.x + (south.y * w));
-	
-	if (south.y < h && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-		neighbours.push({x: south.x, y: south.y});
+	if (this.grid.collision[y + 1] !== undefined
+		&& this.grid.collision[y + 1][x] === 0
+	) {
+		neighbours.push({
+			x: x, 
+			y: y + 1
+		});
 		s1 = true;
 	}
 	
 	// west
-	var west = {x: node.x - 1, y: node.y};
-	idx = (west.x + (west.y * w));
-	
-	if (west.x >= 0 && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-		neighbours.push({x: west.x, y: west.y});
+	if (this.grid.collision[y][x - 1] !== undefined
+		&& this.grid.collision[y][x - 1] === 0
+	) {
+		neighbours.push({
+			x: x - 1, 
+			y: y
+		});
 		s0 = true;
 	}
 	
-	if (allowDiagonal) {
-		
-		if (dontCrossCorners) {
-	        d0 = s3 && s0;
-	        d1 = s0 && s1;
-	        d2 = s1 && s2;
-	        d3 = s2 && s3;
-	    } else {
-	        d0 = s3 || s0;
-	        d1 = s0 || s1;
-	        d2 = s1 || s2;
-	        d3 = s2 || s3;
-	    }
-		
-		// northeast
-		var northeast = {x: node.x + 1, y: node.y - 1};
-		idx = (northeast.x + (northeast.y * w));
-		
-		if (d3 && northeast.x < w && northeast.y >= 0 && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-			neighbours.push({x: northeast.x, y: northeast.y});
-		}
-		
-		// southeast
-		var southeast = {x: node.x + 1, y: node.y + 1};
-		idx = (southeast.x + (southeast.y * w));
-		
-		if (d2 && southeast.x < w && southeast.y < h && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-			neighbours.push({x: southeast.x, y: southeast.y});
-		}
-		
-		// southwest
-		var southwest = {x: node.x - 1, y: node.y + 1};
-		idx = (southwest.x + (southwest.y * w));
-		
-		if (d1 && southwest.x >= 0 && southwest.y < h && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-			neighbours.push({x: southwest.x, y: southwest.y});
-		}
-		
-		// northeast
-		var northeast = {x: node.x - 1, y: node.y - 1};
-		idx = (northeast.x + (northeast.y * w));
-		
-		if (d0 && northeast.x >= 0 && northeast.y >= 0 && (this.grid.data[idx] === undefined || this.grid.data[idx].isWalkable())) {
-			neighbours.push({x: northeast.x, y: northeast.y});
-		}
+	if (!allowDiagonal) {
+		return neighbours;
+	}
+	
+	if (dontCrossCorners) {
+        d0 = s3 && s0; // northwest
+        d1 = s0 && s1; // southwest
+        d2 = s1 && s2; // southeast
+        d3 = s2 && s3; // northeast
+    } else {
+        d0 = s3 || s0; // northwest
+        d1 = s0 || s1; // southwest
+        d2 = s1 || s2; // southeast
+        d3 = s2 || s3; // northeast
+    }
+	
+	if (d0
+		&& this.grid.collision[y - 1] !== undefined
+		&& this.grid.collision[y - 1][x - 1] !== undefined
+		&& this.grid.collision[y - 1][x - 1] === 0
+	) { // northwest
+		neighbours.push({
+			x: x - 1, 
+			y: y - 1
+		});
+	}
+	
+	if (d1
+		&& this.grid.collision[y + 1] !== undefined
+		&& this.grid.collision[y + 1][x - 1] !== undefined
+		&& this.grid.collision[y + 1][x - 1] === 0
+	) { // southwest
+		neighbours.push({
+			x: x - 1, 
+			y: y + 1
+		});
+	}
+	
+	if (d2
+		&& this.grid.collision[y + 1] !== undefined
+		&& this.grid.collision[y + 1][x + 1] !== undefined
+		&& this.grid.collision[y + 1][x + 1] === 0
+	) { // southeast
+		neighbours.push({
+			x: x + 1, 
+			y: y + 1
+		});
+	}
+	
+	if (d3
+		&& this.grid.collision[y - 1] !== undefined
+		&& this.grid.collision[y - 1][x + 1] !== undefined
+		&& this.grid.collision[y - 1][x + 1] === 0
+	) { // northeast
+		neighbours.push({
+			x: x + 1, 
+			y: y - 1
+		});
 	}
 	
 	return neighbours;
+}
+
+function GameMapObject()
+{
+	this.render = function () {
+		ctx.save();
+		var objInfo = OBJECT_TYPES[this.type];
+		if (objInfo !== undefined) {
+			if (objInfo.asset) {
+				ctx.drawImage(Loader.sources[objInfo.asset], 
+					objInfo.x, objInfo.y, objInfo.w, objInfo.h, 
+					this.worldX + objInfo.offX, this.worldY + objInfo.offY, objInfo.w, objInfo.h
+				);
+			} else if (objInfo.color) {
+				ctx.fillStyle = objInfo.color;
+				ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
+			}
+		}
+		ctx.restore();
+	};
 }
