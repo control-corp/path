@@ -15,12 +15,13 @@
             div { margin-bottom: 10px; }
             input, button { border: 1px solid #000; }
             h2 { font-size: 14px; }
-            #viewport { display: none; position: relative; float: left; margin-left: 10px; }
+            #viewport { position: relative; float: left; margin-left: 10px; }
             #viewport canvas { position: absolute; border: 1px solid #000; background-color: transparent }
+            #objectTypes { clear: left; }
         </style>
     </head>
     <body>
-        <div style="float: left; height: 600px; overflow: auto;">
+        <div style="float: left; height: 600px; width: 450px; overflow: auto;">
             <div>
                 w: <input type="text" name="mapWidth" value="" style="width: 30px;" />
                 h: <input type="text" name="mapHeight" value="" style="width: 30px;" />
@@ -50,11 +51,9 @@
                     <div id="infoObjects">Objects in cell: -</div>
                 </div>
                 <div>
-                    <h2>Show coords</h2>
+                    <span>Show coords</span>
                     <input type="checkbox" name="showCoords" value="1" />
-                </div>
-                <div>
-                    <h2>Show count objects</h2>
+                    <span>Show count objects: </span>
                     <input type="checkbox" name="showCountObjects" value="1" />
                 </div>
                 <div>
@@ -65,7 +64,7 @@
                 </div>
                 <div id="objectTypes">
                     <h2>Object type</h2>
-                    <div></div>
+                    <div style="float: left; width: 100%"></div>
                 </div>
             </div>
         </div>

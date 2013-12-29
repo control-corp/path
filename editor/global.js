@@ -14,7 +14,7 @@ var mouseScreenX,
 var defaultMap = 'map.json';
 
 var SELECTED_MAP_TYPE    = 'collision';
-var SELECTED_OBJECT_TYPE = 'grass';
+var SELECTED_OBJECT_TYPE = 'grass1';
 var SHOW_COORDS          = 0;
 var SHOW_COUNT_OBJECTS   = 0;
 

@@ -15,9 +15,20 @@ var OBJECT_TYPES =
 		z: 99
 	},
 	
-	grass: {
+	grass1: {
 		z: 1,
 		asset: 'grassland.png',
+		offX: 0,
+		offY: 0,
+		x: 0,
+		y: 0,
+		w: 32,
+		h: 32
+	},
+	
+	grass2: {
+		z: 1,
+		asset: 'grass2.png',
 		offX: 0,
 		offY: 0,
 		x: 0,

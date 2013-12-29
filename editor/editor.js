@@ -37,7 +37,7 @@ function createCollision(x, y)
 }
 
 function createObjects(x, y)
-{
+{	
 	switch (SELECTED_OBJECT_TYPE) {
 		case 'portal':
 			createPortal(x, y);
@@ -49,6 +49,12 @@ function createObjects(x, y)
 
 function createPortal(x, y)
 {
+	if (OBJECT_TYPES['portal'] === undefined) {
+		alert('"portal" does not exists');
+		isMouseDown = false;
+		return;
+	}
+	
 	var idx = x + (y * grid.w);
 	
 	if (grid.objects[idx] === undefined) {
@@ -76,6 +82,12 @@ function createPortal(x, y)
 
 function createObject(x, y)
 {
+	if (OBJECT_TYPES[SELECTED_OBJECT_TYPE] === undefined) {
+		alert('"' + SELECTED_OBJECT_TYPE + '" does not exists');
+		isMouseDown = false;
+		return;
+	}
+	
 	var idx = x + (y * grid.w);
 	
 	if (grid.objects[idx] === undefined) {
@@ -210,8 +222,10 @@ function drawMap(map)
 			
 			if (obj !== undefined) {
 				for (type in obj) {
-					objects.push(GameMapObjectFactory(type, x, y, OBJECT_TYPES[type].z, wx, wy, obj[type].data));
-					co++;
+					if (OBJECT_TYPES[type] !== undefined) {
+						objects.push(GameMapObjectFactory(type, x, y, OBJECT_TYPES[type].z, wx, wy, obj[type].data));
+						co++;
+					}
 				} 
 			}
 
@@ -277,7 +291,7 @@ function showInfo()
     }
 	
 	if (obj !== undefined) {
-		$('#infoObjects').html('Objects in cell: <br />' + JSON.stringify(obj));
+		$('#infoObjects').html('Objects in cell: ' + JSON.stringify(obj));
 	} else {
 		$('#infoObjects').html('Objects in cell: -');
 	}
@@ -290,7 +304,7 @@ $(document).ready(function () {
 
 	registerInputs();
 	
-	Loader.load(['grassland.png'], function () {
+	Loader.load(['grassland.png', 'grass2.png'], function () {
 		$('select[name="map"]').val(defaultMap).change();
 	});
 	
@@ -301,17 +315,11 @@ $(document).ready(function () {
 			canvas.width  = (data.w * tileSize);
 			canvas.height = (data.h * tileSize);
 			drawMap(data);
-			$('#viewport').show();
 		});
 	});
 	
 	$(document).on('click', 'input[type="radio"][name="mapType"]', function () {
 		SELECTED_MAP_TYPE = $(this).val();
-		if (SELECTED_MAP_TYPE === 'objects') {
-			$('#objectTypes').show();
-		} else {
-			$('#objectTypes').hide();
-		}
 	});
 	
 	$(document).on('click', 'input[type="radio"][name="objectType"]', function () {
@@ -378,13 +386,20 @@ $(document).ready(function () {
 		$.unblockUI();
 	});
 	
-	var objectTypes = [];
+	var i, o, d, objectTypes = [];
 	
-	for (var i in OBJECT_TYPES) {
-		objectTypes.push('<input type="radio" name="objectType" value="' + i + '" />: ' + i);
+	for (i in OBJECT_TYPES) {
+		o = OBJECT_TYPES[i];
+		d = '';
+		if (o.asset) {
+			d += '<div style="float: left; width: ' + o.w + 'px; height: ' + o.h + 'px; background-position: -' + o.x + 'px -' + o.y + 'px; background-image: url(../game/assets/' + o.asset + ');"></div>';
+		} else if (o.color) {
+			d += '<div style="float: left; background-color: ' + o.color + '; width: ' + tileSize + 'px; height: ' + tileSize + 'px;"></div>';
+		}
+		objectTypes.push('<div style="float: left; width: 200px; padding: 1%;"><input type="radio" style="float: left;" name="objectType" value="' + i + '" />' + d + '</div>');
 	}
 	
-	$('#objectTypes div').html(objectTypes.join('<br />'));
+	$('#objectTypes div').html(objectTypes.join(''));
 	
 	$('input[name="mapName"], input[name="mapWidth"], input[name="mapHeight"]').val('');
 	$('input[type="radio"][name="mapType"][value="' + SELECTED_MAP_TYPE + '"]').click();
