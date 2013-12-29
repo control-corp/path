@@ -104,6 +104,9 @@ GameMap.prototype.render = function()
 			obj = this.grid.objects[idx];
 			if (obj !== undefined) {
 				for (type in obj) {
+					if (OBJECT_TYPES[type] === undefined) {
+						continue;
+					}
 					gameObject = new GameMapObject();
 					gameObject.type = type;
 					gameObject.x = x;

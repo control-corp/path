@@ -51,6 +51,7 @@ $(document).ready(function ()
 	Loader.load([
         'grassland.png',
         'grass2.png',
+        'lordshade.png'
     ], function () {
 		start();
 	});

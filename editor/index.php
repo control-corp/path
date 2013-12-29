@@ -7,6 +7,7 @@
         <script src="../lib/jquery/1.10.2.min.js"></script>
         <script src="../lib/jquery/plugins/blockUI.js"></script>
         <script src="../shared/object.types.js"></script>
+        <script src="../shared/event.types.js"></script>
         <script src="../shared/utils.js"></script>
         <script src="global.js"></script>
         <script src="editor.js"></script>
@@ -18,6 +19,8 @@
             #viewport { position: relative; float: left; margin-left: 10px; }
             #viewport canvas { position: absolute; border: 1px solid #000; background-color: transparent }
             #objectTypes { clear: left; }
+            #eventTypes { clear: left; }
+            .mapPanel { display: none; }
         </style>
     </head>
     <body>
@@ -28,7 +31,7 @@
                 name: <input type="text" name="mapName" value="" value="" style="width: 60px;" />
                 <button name="createMap">create map</button>
             </div>
-            <div>
+            <div class="mapPanel">
                 <div>
                     <h2>Map</h2>
                     <select name="map">
@@ -49,6 +52,7 @@
                 <div>
                     <div id="mouse">Mouse: -</div>
                     <div id="infoObjects">Objects in cell: -</div>
+                    <div id="infoEvents">Events in cell: -</div>
                 </div>
                 <div>
                     <span>Show coords</span>
@@ -60,15 +64,20 @@
                     <h2>Map type</h2>
                     <input type="radio" name="mapType" value="collision" />: collision<br />
                     <input type="radio" name="mapType" value="objects" />: objects<br />
-                    <input type="radio" name="mapType" value="erase" />: erase
+                    <input type="radio" name="mapType" value="erase" />: erase<br />
+                    <input type="radio" name="mapType" value="events" />: events
                 </div>
                 <div id="objectTypes">
                     <h2>Object type</h2>
                     <div style="float: left; width: 100%"></div>
                 </div>
+                <div id="eventTypes">
+                    <h2>Event type</h2>
+                    <div style="float: left; width: 100%"></div>
+                </div>
             </div>
         </div>
-		<div id="viewport">
+		<div id="viewport" class="mapPanel">
 		    <canvas id="canvas"></canvas>
 		</div>
     </body>

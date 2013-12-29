@@ -174,13 +174,14 @@ GamePlayer.prototype.render = function()
 
 GamePlayer.prototype.checkEvents = function()
 {
-	var obj = this.mapRenderer.grid.objects[this.target.idx];
+	var events = this.mapRenderer.grid.events[this.target.idx], type, event;
 	
-	if (obj !== undefined) {
-		for (var type in obj) {
+	if (events !== undefined) {
+		for (type in events) {
+			event = events[type];
 			switch (type) {
-				case 'portal' :
-					var data = obj[type].data.split(',');
+				case 'teleport' :
+					var data = event.data.split(',');
 					if (data[2]) {
 						this.mapRenderer.setMap(data[2], function (map) {
 							map.scene.player.setMapCoords(data[0], data[1]);
@@ -189,8 +190,8 @@ GamePlayer.prototype.checkEvents = function()
 						this.setMapCoords(data[0], data[1]);
 					}
 					break;
-				case 'goal' :
-					alert('Ta daa');
+				case 'exit' :
+					alert(event.data);
 					gameManager.currentState.done = true;
 					break;
 			}

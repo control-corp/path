@@ -5,9 +5,15 @@ var OBJECT_TYPES =
 		z: 99
 	},
 	
-	portal: {
-		color: 'blue',
-		z: 99
+	hole: {
+		z: 99,
+		asset: 'lordshade.png',
+		offX: -5,
+		offY: 0,
+		x: 340,
+		y: 10,
+		w: 40,
+		h: 32
 	},
 	
 	goal: {
@@ -49,7 +55,7 @@ var OBJECT_TYPES =
 	},
 	
 	tree1: {
-		z: 101,
+		z: 102,
 		asset: 'grassland.png',
 		offX: -44,
 		offY: -125,
@@ -60,7 +66,7 @@ var OBJECT_TYPES =
 	},
 	
 	tree2: {
-		z: 101,
+		z: 102,
 		asset: 'grassland.png',
 		offX: -54,
 		offY: -125,
