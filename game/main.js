@@ -49,7 +49,8 @@ $(document).ready(function ()
 	ctx.font = '10px Verdana';
 
 	Loader.load([
-        'grassland.png'
+        'grassland.png',
+        'grass2.png',
     ], function () {
 		start();
 	});

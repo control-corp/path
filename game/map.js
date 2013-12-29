@@ -267,7 +267,7 @@ function GameMapObject()
 		ctx.save();
 		var objInfo = OBJECT_TYPES[this.type];
 		if (objInfo !== undefined) {
-			if (objInfo.asset) {
+			if (objInfo.asset && Loader.sources[objInfo.asset] !== undefined) {
 				ctx.drawImage(Loader.sources[objInfo.asset], 
 					objInfo.x, objInfo.y, objInfo.w, objInfo.h, 
 					this.worldX + objInfo.offX, this.worldY + objInfo.offY, objInfo.w, objInfo.h
@@ -275,6 +275,8 @@ function GameMapObject()
 			} else if (objInfo.color) {
 				ctx.fillStyle = objInfo.color;
 				ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
+			} else {
+				console.log('Cannot draw "' + this.type + '"');
 			}
 		}
 		ctx.restore();
