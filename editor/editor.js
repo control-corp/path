@@ -250,7 +250,7 @@ function drawMap(map)
 
 			// collisions
 			if (grid.collision[y][x]) {
-				objects.push(GameMapObjectFactory('collision', x, y, 9997, wx, wy));
+				objects.push(GameMapObjectFactory('collision', x, y, 9996, wx, wy));
 			}
 			
 			idx = x + (y * w);

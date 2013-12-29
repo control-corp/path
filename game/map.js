@@ -93,8 +93,10 @@ GameMap.prototype.render = function()
 
 	var objects = [];
 	
-	for (var y = startY - 1; y < endY + 3; y++) {
-		for (var x = startX - 1; x < endX + 3; x++) {
+	var additionalView = 3;
+	
+	for (var y = startY - additionalView; y < endY + additionalView; y++) {
+		for (var x = startX - additionalView; x < endX + additionalView; x++) {
 			if (x < 0 || y < 0 || x >= this.grid.w || y >= this.grid.h) {
 				continue;
 			}
