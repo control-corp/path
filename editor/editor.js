@@ -49,7 +49,7 @@ function createObjects(x, y)
 
 function createEvents(x, y)
 {	
-	switch (SELECTED_OBJECT_TYPE) {
+	switch (SELECTED_EVENT_TYPE) {
 		default: 
 			createEvent(x, y);
 	}
