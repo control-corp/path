@@ -177,21 +177,23 @@ GamePlayer.prototype.checkEvents = function()
 	var obj = this.mapRenderer.grid.objects[this.target.idx];
 	
 	if (obj !== undefined) {
-		switch (obj.type) {
-			case 'portal' :
-				var data = obj.data.split(',');
-				if (data[2]) {
-					this.mapRenderer.setMap(data[2], function (map) {
-						map.scene.player.setMapCoords(data[0], data[1]);
-					});
-				} else {
-					this.setMapCoords(data[0], data[1]);
-				}
-				break;
-			case 'goal' :
-				alert('Ta daa');
-				gameManager.currentState.done = true;
-				break;
+		for (var type in obj) {
+			switch (type) {
+				case 'portal' :
+					var data = obj[type].data.split(',');
+					if (data[2]) {
+						this.mapRenderer.setMap(data[2], function (map) {
+							map.scene.player.setMapCoords(data[0], data[1]);
+						});
+					} else {
+						this.setMapCoords(data[0], data[1]);
+					}
+					break;
+				case 'goal' :
+					alert('Ta daa');
+					gameManager.currentState.done = true;
+					break;
+			}
 		}
 	}
 }

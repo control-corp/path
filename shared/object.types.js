@@ -1,10 +1,5 @@
 var OBJECT_TYPES = 
 {
-	empty: {
-		color: 'white',
-		z: 99
-	},
-	
 	brick: {
 		color: 'black',
 		z: 99
@@ -18,6 +13,28 @@ var OBJECT_TYPES =
 	goal: {
 		color: 'yellow',
 		z: 99
+	},
+	
+	grass: {
+		z: 1,
+		asset: 'grassland.png',
+		offX: 0,
+		offY: 0,
+		x: 0,
+		y: 0,
+		w: 32,
+		h: 32
+	},
+	
+	metal: {
+		z: 1,
+		asset: 'grassland.png',
+		offX: 0,
+		offY: 0,
+		x: 0,
+		y: 32,
+		w: 32,
+		h: 32
 	},
 	
 	tree1: {

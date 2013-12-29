@@ -14,8 +14,9 @@ var mouseScreenX,
 var defaultMap = 'map.json';
 
 var SELECTED_MAP_TYPE    = 'collision';
-var SELECTED_OBJECT_TYPE = 'brick';
+var SELECTED_OBJECT_TYPE = 'grass';
 var SHOW_COORDS          = 0;
+var SHOW_COUNT_OBJECTS   = 0;
 
 function registerInputs()
 {
@@ -38,14 +39,18 @@ function registerInputs()
 		if (isMouseDown) {
 			handleInput(true);
 		}
+		showInfo();
 	});
 	
 	$(canvas).bind('mouseenter', function (e) {
 		mouseIsInside = true;
+		showInfo();
 	});
 	
 	$(canvas).bind('mouseleave', function (e) {
 		mouseIsInside = false;
+		$('#infoObjects').html('Objects in cell: -');
+		$('#mouse').html('Mouse: -');
 	});
 	
 	$(document).bind('mouseup', function (e) {  
@@ -140,4 +145,25 @@ var Loader = {
 		ctx.fillText('(' + loaded + ' of ' + total + ')', x, y + 30);
 		ctx.restore();
 	}
+}
+
+function drawTextBG(txt, x, y, b, c, f) {
+    /// lets save current state as we make a lot of changes        
+    ctx.save();
+    /// set font
+    ctx.font = f || '10px Verdana';
+    /// draw text from top - makes life easier at the moment
+    ctx.textBaseline = 'top';
+    /// color for background
+    ctx.fillStyle = b || '#000';
+    /// get width of text
+    var width = ctx.measureText(txt).width;
+    /// draw background rect assuming height of font
+    ctx.fillRect(x, y, width, parseInt(ctx.font, 10));
+    /// text color
+    ctx.fillStyle = c || '#fff';
+    /// draw text on top
+    ctx.fillText(txt, x, y);
+    /// restore original state
+    ctx.restore();
 }

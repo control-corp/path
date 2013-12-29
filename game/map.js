@@ -89,7 +89,7 @@ GameMap.prototype.render = function()
 	var endX = startX + (canvas.width >> tileShift);
 	var endY = startY + (canvas.height >> tileShift);
 
-	var wx, wy, idx, obj, gameObject;
+	var wx, wy, idx, type, obj, gameObject;
 
 	var objects = [];
 	
@@ -103,14 +103,16 @@ GameMap.prototype.render = function()
 			idx = x + (y * this.grid.w);
 			obj = this.grid.objects[idx];
 			if (obj !== undefined) {
-				gameObject = new GameMapObject();
-				gameObject.type = obj.type;
-				gameObject.x = x;
-				gameObject.y = y;
-				gameObject.z = OBJECT_TYPES[obj.type].z || 0;
-				gameObject.worldX = wx,
-				gameObject.worldY = wy
-				objects.push(gameObject);
+				for (type in obj) {
+					gameObject = new GameMapObject();
+					gameObject.type = type;
+					gameObject.x = x;
+					gameObject.y = y;
+					gameObject.z = OBJECT_TYPES[type].z || 0;
+					gameObject.worldX = wx,
+					gameObject.worldY = wy
+					objects.push(gameObject);
+				}
 			}
 		}
 	}

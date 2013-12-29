@@ -29,24 +29,6 @@
             </div>
             <div>
                 <div>
-                    <h2>Show coords</h2>
-                    <input type="checkbox" name="showCoords" value="1" />
-                </div>
-                <div>
-                    <h2>Map type</h2>
-                    <input type="radio" name="mapType" value="collision" />: collision<br />
-                    <input type="radio" name="mapType" value="objects" />: objects
-                </div>
-                <div id="objectTypes">
-                    <h2>Object type</h2>
-                    <input type="radio" name="objectType" value="brick" />: brick<br/>
-                    <input type="radio" name="objectType" value="portal" />: portal<br/>
-                    <input type="radio" name="objectType" value="goal" />: goal<br/>
-                    <input type="radio" name="objectType" value="tree1" />: tree1<br/>
-                    <input type="radio" name="objectType" value="tree2" />: tree2<br/>
-                    <input type="radio" name="objectType" value="tent" />: tent<br/>
-                </div>
-                <div>
                     <h2>Map</h2>
                     <select name="map">
                     <?php
@@ -63,9 +45,29 @@
                     <button name="clear">clear</button>
                     <button name="delete">delete</button>
                 </div>
+                <div>
+                    <div id="mouse">Mouse: -</div>
+                    <div id="infoObjects">Objects in cell: -</div>
+                </div>
+                <div>
+                    <h2>Show coords</h2>
+                    <input type="checkbox" name="showCoords" value="1" />
+                </div>
+                <div>
+                    <h2>Show count objects</h2>
+                    <input type="checkbox" name="showCountObjects" value="1" />
+                </div>
+                <div>
+                    <h2>Map type</h2>
+                    <input type="radio" name="mapType" value="collision" />: collision<br />
+                    <input type="radio" name="mapType" value="objects" />: objects<br />
+                    <input type="radio" name="mapType" value="erase" />: erase
+                </div>
+                <div id="objectTypes">
+                    <h2>Object type</h2>
+                    <div></div>
+                </div>
             </div>
-            <div id="mouse"></div>
-            <div id="debug"></div>
         </div>
 		<div id="viewport">
 		    <canvas id="canvas"></canvas>

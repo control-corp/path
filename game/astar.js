@@ -118,6 +118,7 @@ AStar.prototype.constructPath = function(node, start, end, set)
 	var path = [];
 
 	if (node.x != end.x || node.y != end.y) {
+		return path;
 		var lowest_score = 1E+37;
 		var lowest_node  = null;
 		for (i = 0, l = set.length; i < l; ++i) {

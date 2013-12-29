@@ -15,15 +15,12 @@ function handleInput(mouseMove)
 			createCollision(mouseX, mouseY);
 			break;
 		case 'objects' :
+			createObjects(mouseX, mouseY);
+			break;
+		case 'erase' :
 			var idx = mouseX + (mouseY * grid.w);
-			if (grid.objects[idx] !== undefined && grid.objects[idx].type !== SELECTED_OBJECT_TYPE) {
-				if (confirm('This object is different than selected one. Do you want to override it?')) {
-					createObjects(mouseX, mouseY);
-				}
-				isMouseDown = false;
-				break;
-			} else {
-				createObjects(mouseX, mouseY);
+			if (grid.objects[idx] !== undefined) {
+				delete grid.objects[idx];
 			}
 			break;
 	}
@@ -52,20 +49,27 @@ function createObjects(x, y)
 
 function createPortal(x, y)
 {
-	var idx    = x + (y * grid.w);
-	var exists = grid.objects[idx] !== undefined;
-	var data   = prompt('Input data or empty for delete', (exists ? grid.objects[idx].data : ''));
+	var idx = x + (y * grid.w);
+	
+	if (grid.objects[idx] === undefined) {
+		grid.objects[idx] = {};
+	}
+	
+	var exists = grid.objects[idx]['portal'] !== undefined;
+	var data   = prompt('Input data or empty for delete', (exists && grid.objects[idx]['portal'].data !== undefined ? grid.objects[idx]['portal'].data : ''));
 	
 	if (data !== null) {
 		data = $.trim(data);
 		if (data === '') {
 			if (exists) {
-				delete grid.objects[idx];
+				delete grid.objects[idx]['portal'];
 			}
 		} else {
-			grid.objects[idx] = createEmpyObject('portal', data);
+			grid.objects[idx]['portal'] = {data: data};
 		}
 	}
+	
+	deleteEmptyGridObject(idx);
 	
 	isMouseDown = false;
 }
@@ -75,27 +79,23 @@ function createObject(x, y)
 	var idx = x + (y * grid.w);
 	
 	if (grid.objects[idx] === undefined) {
-		grid.objects[idx] = createEmpyObject(SELECTED_OBJECT_TYPE);
-	} else {
-		if (grid.objects[idx].type !== SELECTED_OBJECT_TYPE) {
-			grid.objects[idx] = createEmpyObject(SELECTED_OBJECT_TYPE);
-		} else {
-			delete grid.objects[idx];
-		}
+		grid.objects[idx] = {};
 	}
+	
+	if (grid.objects[idx][SELECTED_OBJECT_TYPE] === undefined) {
+		grid.objects[idx][SELECTED_OBJECT_TYPE] = {};
+	} else {
+		delete grid.objects[idx][SELECTED_OBJECT_TYPE];
+	}
+	
+	deleteEmptyGridObject(idx);
 }
 
-function createEmpyObject(type, data)
+function deleteEmptyGridObject(idx)
 {
-	var o = {};
-	
-	o.type = type;
-	
-	if (data) {
-		o.data = data;
+	if (Object.getOwnPropertyNames(grid.objects[idx]).length === 0) {
+		delete grid.objects[idx];
 	}
-	
-	return o;
 }
 
 function GameMapObject()
@@ -104,10 +104,22 @@ function GameMapObject()
 	{
 		ctx.save();
 		switch(this.type) {
+			case 'countObjects' :
+				drawTextBG(
+					this.data, 
+					this.worldX, 
+					this.worldY,
+					null,
+					null,
+					'15px Verdana'
+				);
+				break;
 			case 'coords' :
-				ctx.fillStyle = 'red';
-				ctx.fillText(this.x + ',' + this.y, this.worldX + 3, this.worldY + 8);
-				//ctx.fillText('y:' + this.y, this.worldX + 3, this.worldY + 16);
+				drawTextBG(
+					this.x + ',' + this.y, 
+					this.worldX, 
+					this.worldY
+				);
 				break;
 			case 'collision' :
 				ctx.beginPath();
@@ -115,7 +127,7 @@ function GameMapObject()
 				ctx.lineWidth = 3;
 				ctx.rect(this.worldX, this.worldY, tileSize, tileSize);
 				ctx.stroke();
-			break;
+				break;
 			default:
 				var objInfo = OBJECT_TYPES[this.type];
 			    if (objInfo === undefined) {
@@ -130,14 +142,18 @@ function GameMapObject()
 					ctx.fillStyle = objInfo.color;
 					ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
 				} else {
-					throw 'Invalid object info';
+					throw 'Invalid object info (missing asset or color)';
 				}
-				if (this.data) {
-					ctx.fillStyle = 'white';
-					ctx.fillText(this.data, this.worldX + 3, this.worldY + tileSize - 5);
+				if (this.data !== undefined) {
+					drawTextBG(
+						this.data,
+						this.worldX, 
+						this.worldY + tileSize - 10
+					);
 				}
 				ctx.beginPath();
-				ctx.strokeStyle = 'green';
+				ctx.strokeStyle = 'black';
+				ctx.globalAlpha = 0.5;
 				ctx.lineWidth = 1;
 				ctx.rect(this.worldX, this.worldY, tileSize, tileSize);
 				ctx.stroke();
@@ -153,10 +169,12 @@ function GameMapObjectFactory(type, x, y, z, wx, wy, data)
 	o.type = type;
 	o.x = x;
 	o.y = y;
-	o.z = z;
+	o.z = z || 0;
 	o.worldX = wx;
 	o.worldY = wy;
-	o.data = data;
+	if (data !== undefined) {
+		o.data = data;
+	}
 	return o;
 }
 
@@ -170,8 +188,8 @@ function drawMap(map)
 		return;
 	}
 	
-	var type, x, y, w, h, idx, wx, wy, obj, objInfo;
-	var gameObject, objects = [];
+	var type, x, y, w, h, idx, wx, wy, obj, co = 0;
+	var objects = [];
 	
     for (y = 0, h = grid.h; y < h; y++) {
     	for (x = 0, w = grid.w; x < w; x++) {
@@ -187,14 +205,24 @@ function drawMap(map)
 			idx = x + (y * w);
 			
 			obj = this.grid.objects[idx];
+
+			co = 0;
 			
 			if (obj !== undefined) {
-				objects.push(GameMapObjectFactory(obj.type, x, y, OBJECT_TYPES[obj.type].z, wx, wy, obj.data));
+				for (type in obj) {
+					objects.push(GameMapObjectFactory(type, x, y, OBJECT_TYPES[type].z, wx, wy, obj[type].data));
+					co++;
+				} 
 			}
 
 			//show coords
 			if (SHOW_COORDS) {
 				objects.push(GameMapObjectFactory('coords', x, y, 9998, wx, wy));
+			}
+			
+			//show count objects
+			if (SHOW_COUNT_OBJECTS) {
+				objects.push(GameMapObjectFactory('countObjects', x, y, 9998, wx, wy, co));
 			}
     	}
     }
@@ -224,8 +252,35 @@ function drawMap(map)
 			obj.render();
 		}
 	});
-    
 	ctx.restore();
+}
+
+function showInfo()
+{
+	if (grid === undefined) {
+		return;
+	}
+	
+	var obj, idx;
+	
+	for (y = 0, h = grid.h; y < h; y++) {
+    	for (x = 0, w = grid.w; x < w; x++) {
+    		wx = x * tileSize;
+			wy = y * tileSize;
+			if (mouseX === x && mouseY === y) {
+				idx = x + (y * w);
+				obj = this.grid.objects[idx];
+				y = h;
+				break;
+			}
+    	}
+    }
+	
+	if (obj !== undefined) {
+		$('#infoObjects').html('Objects in cell: <br />' + JSON.stringify(obj));
+	} else {
+		$('#infoObjects').html('Objects in cell: -');
+	}
 }
 
 $(document).ready(function () {
@@ -268,6 +323,11 @@ $(document).ready(function () {
 		drawMap();
 	});
 	
+	$(document).on('click', 'input[type="checkbox"][name="showCountObjects"]', function () {
+		SHOW_COUNT_OBJECTS = $(this).is(':checked') ? 1 : 0;
+		drawMap();
+	});
+	
 	$(document).on('click', 'button[name="save"]', function () {
 		if (grid === undefined) return;
 		$.blockUI();
@@ -296,7 +356,7 @@ $(document).ready(function () {
 	});
 			
 	$(document).on('click', 'button[name="clear"]', function () {
-		if (!confirm('Sure?') || grid === undefined) return;
+		if (!confirm('Are you sure to clear all map?') || grid === undefined) return;
 		grid.objects = {};
 		for (var y = 0; y < grid.h; ++y) {
 			for (var x = 0; x < grid.w; ++x) {
@@ -307,7 +367,7 @@ $(document).ready(function () {
 	});
 	
 	$(document).on('click', 'button[name="delete"]', function () {
-		if (!confirm('Sure?')) return;
+		if (!confirm('Are you sure to delete the map?')) return;
 		$.blockUI();
 		$.post('savemap.php', {op: 'delete', map: $('select[name="map"]').val()}, function () {
 			window.location.reload();
@@ -318,8 +378,17 @@ $(document).ready(function () {
 		$.unblockUI();
 	});
 	
+	var objectTypes = [];
+	
+	for (var i in OBJECT_TYPES) {
+		objectTypes.push('<input type="radio" name="objectType" value="' + i + '" />: ' + i);
+	}
+	
+	$('#objectTypes div').html(objectTypes.join('<br />'));
+	
 	$('input[name="mapName"], input[name="mapWidth"], input[name="mapHeight"]').val('');
 	$('input[type="radio"][name="mapType"][value="' + SELECTED_MAP_TYPE + '"]').click();
 	$('input[type="radio"][name="objectType"][value="' + SELECTED_OBJECT_TYPE + '"]').click();
 	$('input[type="checkbox"][name="showCoords"]').attr('checked', (SHOW_COORDS ? true : false));
+	$('input[type="checkbox"][name="showCountObjects"]').attr('checked', (SHOW_COUNT_OBJECTS ? true : false));
 });
