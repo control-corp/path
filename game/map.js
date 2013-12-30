@@ -5,12 +5,6 @@ function GameMap(scene)
 	this.grid = {};
 	
 	this.mapIsLoaded = false;
-
-	this.pathFinder = new AStar({
-		map: this
-	});
-	
-	this.initMap('map');
 }
 
 GameMap.prototype.initMap = function(map)
@@ -20,20 +14,31 @@ GameMap.prototype.initMap = function(map)
 	});
 }
 
+GameMap.prototype.getPathFinder = function()
+{
+	if (this.pathFinder === undefined) {
+		this.pathFinder = new AStar({
+			map: this
+		});
+	}
+	
+	return this.pathFinder;
+}
+
 GameMap.prototype.setMap = function(map, onLoad)
 {
-	this.grid = {};
+	this.grid        = {};
 	this.mapIsLoaded = false;
-	this.mapName = map;
+	this.mapName     = map;
 	
 	var self = this;
 
 	$.getJSON('game/maps/' + map + '.json?r' + new Date().getTime(), function (response) {
-		self.grid = response;
-		self.mapIsLoaded = true;
-		if (typeof onLoad === 'function') {
-			onLoad(self);
-		}
+		setTimeout(function () {
+			self.grid = response;
+			self.mapIsLoaded = true;
+			if (typeof onLoad === 'function') onLoad(self);
+		}, 100);
 	});
 }
 
@@ -48,22 +53,15 @@ GameMap.prototype.findPath = function(from, to)
 		|| to.y >= this.grid.h
 		|| this.grid.collision[to.y] === undefined
 		|| this.grid.collision[to.y][to.x] === undefined
+		|| this.grid.collision[to.y][to.x] === 1
 		|| (from.x == to.x && from.y == to.y)
 	) {
 		return path;
 	}
 
-	if (this.grid.collision[to.y][to.x] === 1) {
-		return path;
-	}
-
-	if (this.pathFinder.map === undefined) {
-		return path;
-	}
-	
 	globalData.paths++;
 	
-	return this.pathFinder.findPath(from, to);
+	return this.getPathFinder().findPath(from, to);
 }
 
 GameMap.prototype.logic = function()
@@ -74,17 +72,19 @@ GameMap.prototype.logic = function()
 GameMap.prototype.renderLoading = function()
 {
 	ctx.save();
-	ctx.font = '20px Verdana';
-	ctx.fillStyle = 'blue';
+	ctx.fillStyle = 'black';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.font = '10px Verdana';
 	ctx.textAlign = 'center';
-	ctx.fillText('Loading "' + this.mapName + '" ...', canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = 'white';
+	ctx.fillText('Loading "' + this.mapName + '"', canvas.width / 2, canvas.height / 2);
 	ctx.restore();
 }
 
 GameMap.prototype.render = function()
 {
-	var startX = (camera.x >> tileShift);
-	var startY = (camera.y >> tileShift);
+	var startX = (gameCamera.x >> tileShift);
+	var startY = (gameCamera.y >> tileShift);
 	
 	var endX = startX + (canvas.width >> tileShift);
 	var endY = startY + (canvas.height >> tileShift);
@@ -125,7 +125,7 @@ GameMap.prototype.render = function()
 	objects.push(this.scene.player);
 	
 	objects.sort(sortZIndex);
-
+	
 	ctx.save();
 	
 	objects.forEach(function (obj) {

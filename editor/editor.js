@@ -174,7 +174,7 @@ function GameMapObject()
 			    if (objInfo === undefined) {
 			    	throw 'Invalid object';
 			    }
-				if (objInfo.asset) {
+				if (objInfo.asset && Loader.sources[objInfo.asset] !== undefined) {
 					ctx.drawImage(Loader.sources[objInfo.asset], 
 						objInfo.x, objInfo.y, objInfo.w, objInfo.h, 
 						this.worldX + objInfo.offX, this.worldY + objInfo.offY, objInfo.w, objInfo.h
@@ -184,13 +184,6 @@ function GameMapObject()
 					ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
 				} else {
 					throw 'Invalid object info (missing asset or color)';
-				}
-				if (this.data !== undefined) {
-					drawTextBG(
-					    this.type + ': ' + this.data,
-						this.worldX, 
-						this.worldY + tileSize - 10
-					);
 				}
 				ctx.beginPath();
 				ctx.strokeStyle = 'black';
@@ -325,7 +318,7 @@ function showInfo()
 	}
 	
 	var obj, event, idx;
-	
+	////////////////////////////////////////////////////////// = le
 	for (y = 0, h = grid.h; y < h; y++) {
     	for (x = 0, w = grid.w; x < w; x++) {
     		wx = x * tileSize;
@@ -360,7 +353,7 @@ function loadMap(map)
 		canvas.width  = (data.w * tileSize);
 		canvas.height = (data.h * tileSize);
 		drawMap(data);
-		$('select[name="map"]').val(map);
+		$('select[name="map"]').val(map); ////////////////////////////////////////////
 		$('.mapPanel').show();
 	});
 }
@@ -374,6 +367,8 @@ $(document).ready(function () {
 	
 	Loader.onLoad = null;
 
+	Loader.path = '../' + Loader.path;
+	
 	Loader.load(['grassland.png', 'grass2.png', 'lordshade.png'], function () {
 		loadMap($('select[name="map"]').val() || defaultMap);
 	});

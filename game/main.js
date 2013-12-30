@@ -1,11 +1,12 @@
 var canvas, ctx, debug, info = [];
 
+var DEBUG     = 1;
 var tileSize  = 32;
 var tileShift = (Math.log(tileSize) / Math.log(2));
 
 var inputManager;
 var gameManager;
-var camera;
+var gameCamera;
 
 var globalData = {
 	paths: 0
@@ -13,7 +14,10 @@ var globalData = {
 
 function start()
 {
-	camera       = new GameCamera();
+	canvas = document.getElementById('canvas');
+	ctx    = canvas.getContext('2d');
+
+	gameCamera   = new GameCamera();
 	inputManager = new GameInputManager();
 	gameManager  = new GameManager();
 	
@@ -28,7 +32,12 @@ function start()
 		info.push('Mouse: (' + inputManager.mouseX + ', ' + inputManager.mouseY + ')');
 		info.push('Paths: (' + globalData.paths + ')');
 		
-		debug.innerHTML = info.join('<br />');
+		if (DEBUG) {
+			if (debug === undefined) {
+				debug = document.getElementById('debug');
+			}
+			debug.innerHTML = info.join('<br />');
+		}
 		
 		if (gameManager.done || inputManager.done) {
 			console.log('Exit...');
@@ -42,22 +51,10 @@ function start()
 
 $(document).ready(function () 
 {
-	debug  = document.getElementById('debug');
-	canvas = document.getElementById('canvas');
-	ctx    = canvas.getContext('2d');
-	
-	ctx.font = '10px Verdana';
-
-	Loader.load([
-        'grassland.png',
-        'grass2.png',
-        'lordshade.png'
-    ], function () {
-		start();
-	});
+	start();
 	
 	$('button[name="speed+"]').click(function () {
-		if (!Loader.isCompleted) {
+		if (gameManager.currentState.player === undefined) {
 			return;
 		}
 		if (gameManager.currentState.player.isMoving === true) {
@@ -74,7 +71,7 @@ $(document).ready(function ()
 	});
 	
 	$('button[name="speed-"]').click(function () {
-		if (!Loader.isCompleted) {
+		if (gameManager.currentState.player === undefined) {
 			return;
 		}
 		if (gameManager.currentState.player.isMoving === true) {

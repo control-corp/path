@@ -106,8 +106,8 @@ GameInputManager.prototype.calcMouseCoords = function(e, isTouch)
 	var top = (doc && doc.scrollTop  || body && body.scrollTop  || 0);
 	var rect = canvas.getBoundingClientRect();
 
-	var wx = ex - rect.left - left + (camera ? (camera.x || 0) : 0);
-	var wy = ey - rect.top - top + (camera ? (camera.y || 0) : 0);
+	var wx = ex - rect.left - left + (gameCamera ? (gameCamera.x || 0) : 0);
+	var wy = ey - rect.top - top + (gameCamera ? (gameCamera.y || 0) : 0);
 	
 	this.mouseX = wx >> tileShift;
 	this.mouseY = wy >> tileShift;

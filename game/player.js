@@ -6,7 +6,7 @@ function GamePlayer(mapRenderer)
 	this.worldX, 
 	this.worldY,
 	this.idx = 0,
-	this.speed = 3,
+	this.speed = 1,
 	this.target = undefined,
 	this.newTarget = undefined,
 	this.pathFollower = undefined,
@@ -135,9 +135,7 @@ GamePlayer.prototype.setTarget = function()
 		this.newTarget = {};
 		this.newTarget.x = toX;
 		this.newTarget.y = toY;
-		if (this.mapRenderer.grid.w) {
-			this.newTarget.idx = toX + (toY * this.mapRenderer.grid.w);
-		}
+		this.newTarget.idx = toX + (toY * this.mapRenderer.grid.w);
 	}
 }
 
@@ -215,7 +213,5 @@ GamePlayer.prototype.setMapCoords = function(x, y)
 	this.worldX = x * tileSize;
 	this.worldY = y * tileSize;
 	
-	if (this.mapRenderer.grid.w) {
-		this.idx = this.x + (this.y * this.mapRenderer.grid.w);
-	}
+	this.idx = this.x + (this.y * this.mapRenderer.grid.w);
 }

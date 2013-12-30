@@ -8,14 +8,14 @@
         <script src="shared/object.types.js"></script>
         <script src="shared/event.types.js"></script>
         <script src="shared/utils.js"></script>
+        <script src="shared/loader.js"></script>
+        <script src="shared/astar.js"></script>
         <script src="game/input/manager.js"></script>
         <script src="game/manager.js"></script>
         <script src="game/camera.js"></script>
         <script src="game/state/play.js"></script>
-        <script src="game/astar.js"></script>
         <script src="game/map.js"></script>
         <script src="game/player.js"></script>
-        <script src="game/loader.js"></script>
         <script src="game/main.js"></script>
         <style>
             html, body { margin: 5px; padding: 0 }
@@ -33,14 +33,22 @@
                 -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
             }
             #debug {}
+            #game {}
+            #viewport { position: relative; }
+            #viewport canvas { position: absolute; }
         </style>
     </head>
     <body>
-		<canvas id="canvas" width="320" height="320"></canvas>
-		<div>
-            <button name="speed+">Speed +</button>
-            <button name="speed-">Speed -</button>
-		</div>
-		<div id="debug"></div>
+        <div id="game">
+             <div id="viewport">
+	            <canvas id="canvas" width="320" height="320"></canvas>
+	        </div>
+	        <canvas id="canvas" width="320" height="320"></canvas>
+	        <div>
+	            <button name="speed+">Speed +</button>
+	            <button name="speed-">Speed -</button>
+	        </div>
+	        <div id="debug"></div>
+        </div>
     </body>
 </html>

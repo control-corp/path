@@ -9,6 +9,7 @@
         <script src="../shared/object.types.js"></script>
         <script src="../shared/event.types.js"></script>
         <script src="../shared/utils.js"></script>
+        <script src="../shared/loader.js"></script>
         <script src="global.js"></script>
         <script src="editor.js"></script>
         <style>

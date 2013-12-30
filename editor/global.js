@@ -99,37 +99,6 @@ var Keyboard = {
 	pressed: {}
 }
 
-var Loader = {
-	sources: {},
-	isCompleted: false,
-	load: function (imgs, onComplete) {
-		this.isCompleted = false;
-		var len    = imgs.length;
-		var loaded = 0;
-		imgs.forEach(function (asset) {
-			Loader.sources[asset] = new Image();
-			Loader.sources[asset].src = '../game/assets/' + asset;
-			Loader.sources[asset].onload = function () {
-				setTimeout(function () {
-					loaded++;
-				}/*, Math.floor(Math.random() * 5000)*/);
-			};
-		});
-		var interval = window.setInterval(function () {
-			if (loaded === len) {
-				setTimeout(function () {
-					Loader.isCompleted = true;
-					if (typeof onComplete === 'function') {
-						onComplete();
-					}
-				}, 100);
-				window.clearInterval(interval);
-				return;
-			}
-		}, 100);
-	}
-}
-
 function drawTextBG(txt, x, y, b, c, f) {
     /// lets save current state as we make a lot of changes        
     ctx.save();
