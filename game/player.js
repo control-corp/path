@@ -110,9 +110,9 @@ GamePlayer.prototype.move = function()
 		
 		this.idx = this.x + (this.y * this.mapRenderer.grid.w);
 		
-		this._checkForStop();
-		
 		this._checkForEvents();
+		
+		this._checkForStop();
 		
 		this._checkForNewTarget();
 		
@@ -219,16 +219,10 @@ GamePlayer.prototype.render = function()
 
 GamePlayer.prototype._checkForEvents = function()
 {
-	var idx;
-	
-	if (this.x === this.target.x && this.y === this.target.y) {
-		this._triggerEvents(this.mapRenderer.grid.events[this.idx], false);
-	} else {
-		this._triggerEvents(this.mapRenderer.grid.events[this.idx], true);
-	}
+	this._triggerEvents(this.mapRenderer.grid.events[this.idx]);
 }
 
-GamePlayer.prototype._triggerEvents = function (events, onEachStep)
+GamePlayer.prototype._triggerEvents = function (events)
 {
 	if (events === undefined) {
 		return;
@@ -239,11 +233,6 @@ GamePlayer.prototype._triggerEvents = function (events, onEachStep)
 	for (type in events) {
 		params = events[type];
 		event  = EVENT_TYPES[type];
-		if (onEachStep) {
-			if (event.onEachStep === undefined || event.onEachStep === false) {
-				continue;
-			}
-		}
 		switch (type) {
 			case 'teleport' :
 				this._moveStop();
