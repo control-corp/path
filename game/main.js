@@ -21,7 +21,73 @@ function start()
 	inputManager = new GameInputManager();
 	gameManager  = new GameManager();
 	
+	var nextGameTick = new Date().getTime();
+	var fps = 60;
+	var measuredFps = 0;
+	var milliSecPerFrame = 1000 / fps;
+	var frameTime = 0;
+	var frame = 0;
+	
 	(function tick() 
+    {
+		info = ['FPS: ' + measuredFps];
+		
+    	var loops = 0;
+    	
+    	var currentTime = new Date().getTime();
+    	
+    	if (currentTime - nextGameTick > 60 * milliSecPerFrame) {
+            nextGameTick = currentTime - milliSecPerFrame;
+        }
+    	
+    	gameManager.input();
+    	
+    	while (currentTime > nextGameTick) {
+    		gameManager.logic();
+            nextGameTick += milliSecPerFrame;
+            loops++;   
+    	}
+    	
+        if (loops) {
+        	
+        	gameManager.render();
+
+        	info.push('Mouse: (' + inputManager.mouseX + ', ' + inputManager.mouseY + ')');
+    		info.push('Paths: (' + globalData.paths + ')');
+    		
+    		if (DEBUG) {
+    			if (debug === undefined) {
+    				debug = document.getElementById('debug');
+    			}
+    			for (var i in info) {
+    				if (typeof info[i] === 'object') {
+    					info[i] = JSON.stringify(info[i]);
+    				}
+    			}
+    			debug.innerHTML = info.join('<br />');
+    		}
+        }
+
+        if (currentTime > frameTime) {
+        	measuredFps = frame;
+            frame = 0;
+            frameTime = currentTime + 1000;
+        } else {
+            frame++;
+        }
+        
+        if (gameManager.done || inputManager.done) {
+			console.log('Exit...');
+			return;
+		}
+        
+        requestAnimationFrame(tick);
+        
+    })();
+	
+	return;
+	
+	/*(function tick() 
     {
 		info = [];
 		
@@ -36,6 +102,11 @@ function start()
 			if (debug === undefined) {
 				debug = document.getElementById('debug');
 			}
+			for (var i in info) {
+				if (typeof info[i] === 'object') {
+					info[i] = JSON.stringify(info[i]);
+				}
+			}
 			debug.innerHTML = info.join('<br />');
 		}
 		
@@ -46,7 +117,7 @@ function start()
 
         requestAnimationFrame(tick);
         
-    })();
+    })();*/
 }
 
 $(document).ready(function () 

@@ -18,7 +18,8 @@ AStar.prototype.heuristic = function(from, to)
 	
 	//return D * Math.max(dx, dy);
 	//return D * (dx + dy);
-	return D * Math.sqrt(dx * dx + dy * dy);
+	//return D * Math.sqrt(dx * dx + dy * dy);
+	return D * (dx * dx + dy * dy);
 }
 
 AStar.prototype.findPath = function(start, end, limit) 
@@ -27,7 +28,6 @@ AStar.prototype.findPath = function(start, end, limit)
 		open = [], 
 		close = [], 
 		lowest_score, 
-		lowest_node, 
 		lowest_index,
 		foundInOpen,
 		ng,
@@ -47,26 +47,24 @@ AStar.prototype.findPath = function(start, end, limit)
 	while (open.length && close.length < limit) {
 		
 		lowest_score = 1E+37;
-		lowest_node  = null;
 		lowest_index = 0;
 		
 		for (i = 0, l = open.length; i < l; ++i) {
 			if (open[i].g + open[i].h < lowest_score) {
 				lowest_score = open[i].g + open[i].h;
-				lowest_node  = open[i];
 				lowest_index = i;
 			}
 		}
 		
-		node = lowest_node;
+		node = open[lowest_index];
 
 		close.push(node);
-		
-		open.splice(lowest_index, 1);
 		
 		if (node.x == end.x && node.y == end.y) {
 			break;
 		}
+		
+		open.splice(lowest_index, 1);
 
 		if (this.map === null) {
 			neighbours = [];
@@ -115,30 +113,38 @@ AStar.prototype.findPath = function(start, end, limit)
 
 AStar.prototype.constructPath = function(node, start, end, set)
 {
-	var path = [];
-
+	var path = [], modified = false;
+	var lowest_score = 1E+37;
+	
 	if (node.x != end.x || node.y != end.y) {
-		return path;
-		var lowest_score = 1E+37;
-		var lowest_node  = null;
+		
+		return {
+			path     : path, 
+			modified : modified
+		};
+		
 		for (i = 0, l = set.length; i < l; ++i) {
 			if (set[i].h < lowest_score) {
 				lowest_score = set[i].h;
-				lowest_node  = set[i];
+				lowest_index = i;
 			}
 		}
-		node = lowest_node;
+		node = set[lowest_index];
+		modified = true;
 	}
 	
 	while (node.x != start.x || node.y != start.y) {
 		path.push({
-			x : node.x, 
-			y : node.y
+			x: node.x, 
+			y: node.y
 		});
 		node = this.findInSet(node, set).parent;
 	}
 	
-	return path.reverse();
+	return {
+		path     : path, 
+		modified : modified
+	};
 }
 
 AStar.prototype.findInSet = function(node, set)

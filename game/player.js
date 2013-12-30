@@ -7,148 +7,173 @@ function GamePlayer(mapRenderer)
 	this.worldY,
 	this.idx = 0,
 	this.speed = 1,
-	this.target = undefined,
-	this.newTarget = undefined,
-	this.pathFollower = undefined,
-	this.pathCurrent = 0,
+	this.pathNext = undefined,
+	this.pathFollower = undefined;
 	this.mapRenderer = mapRenderer,
-	this.forcedStop = false;
+	this.forceStop = false;
 	this.isMoving = false;
+	this.angle = 0;
+	this.orders = [];
 	;
+}
+
+GamePlayer.prototype.setTarget = function(x, y)
+{
+	if (typeof x === 'object') {
+		x = x.x;
+		y = x.y;
+	}
+	
+	if (this.target !== undefined 
+		&& this.target.x === x 
+		&& this.target.y === y
+	) {
+		return;
+	}
+	
+	this.orders.push({
+		type  : 'target',
+		x     : x, 
+		y     : y,
+		idx   : (x + (y * this.mapRenderer.grid.w)),
+		dirty : true
+	});
 }
 
 GamePlayer.prototype.input = function()
 {
 	if (inputManager.pressed['mouse'] === true) {
-		this.setTarget();
+		this.setTarget(inputManager.mouseX, inputManager.mouseY);
 	}
 	
-	if (inputManager.pressed['esc'] === true && this.isMoving === true) {
-		this.forcedStop = true;
-	}
-}
-
-GamePlayer.prototype.move = function()
-{
-	if (this.pathFollower === undefined) {
-		this.pathFollower = this.mapRenderer.findPath(this, this.target);
-		if (this.pathFollower.length === 0) {
-			return this.stopMove();
-		}
-	}
-	
-	var nextWorldX = this.pathFollower[this.pathCurrent].x * tileSize;
-	var nextWorldY = this.pathFollower[this.pathCurrent].y * tileSize;
-	
-	if (this.pathCurrent < this.pathFollower.length) {
-		if (Math.abs(this.worldX - nextWorldX) < this.speed && Math.abs(this.worldY - nextWorldY) < this.speed) {
-			this.pathCurrent++;
-			if (this.forcedStop) {
-				return this.stopMove();
-			}
-			if (this._checkForNewTarget()) {
-				return true;
-			}
-		}
-	}
-
-	if (this.pathFollower[this.pathCurrent] === undefined) {
-		this.checkEvents();
-		return this.stopMove();
-	}
-	
-	return this._move();
-}
-
-GamePlayer.prototype._checkForNewTarget = function()
-{
-	var path;
-	
-	if (this.newTarget !== undefined) {
-		path = this.mapRenderer.findPath(this, this.newTarget);
-		if (path.length) {
-			this.stopMove(path, this.newTarget);
-			return true;
-		}
-	}
-	
-	return false;
-}
-
-GamePlayer.prototype.stopMove = function(newPath, newTarget)
-{
-	this.pathFollower = newPath || undefined;
-	this.target = newTarget || undefined;
-	this.newTarget = undefined;
-	this.pathCurrent = 0;
-	this.forcedStop = false;
-	this.isMoving = false;
-	
-	return true;
-}
-
-GamePlayer.prototype._move = function()
-{
-	this.isMoving = true;
-	
-	var nextWorldX = this.pathFollower[this.pathCurrent].x * tileSize;
-	var nextWorldY = this.pathFollower[this.pathCurrent].y * tileSize;
-
-	if (this.worldX > nextWorldX) this.worldX = this.worldX - this.speed;
-	if (this.worldX < nextWorldX) this.worldX = this.worldX + this.speed;
-	if (this.worldY > nextWorldY) this.worldY = this.worldY - this.speed;
-	if (this.worldY < nextWorldY) this.worldY = this.worldY + this.speed;
-
-	if (Math.abs(this.worldX - nextWorldX) < this.speed && Math.abs(this.worldY - nextWorldY) < this.speed) {
-		this.worldX = nextWorldX;
-		this.worldY = nextWorldY;
-		this.x = this.worldX >> tileShift;
-		this.y = this.worldY >> tileShift;
-		if (this.mapRenderer.grid.w) {
-			this.idx = this.x + (this.y * this.mapRenderer.grid.w);
-		}
-	}
-	
-	return true;
-}
-
-GamePlayer.prototype.setTarget = function()
-{
-	var toX = inputManager.mouseX;
-	var toY = inputManager.mouseY;
-
-	if (this.target !== undefined 
-		&& this.target.x == toX 
-		&& this.target.y == toY
+	if (inputManager.pressed['esc'] === true 
+		&& this.isMoving === true
 	) {
-		return;
-	}
-	
-	if (this.target === undefined) {
-		this.target = {};
-		this.target.x = toX;
-		this.target.y = toY;
-		if (this.mapRenderer.grid.w) {
-			this.target.idx = toX + (toY * this.mapRenderer.grid.w);
-		}
-	} else {
-		this.newTarget = {};
-		this.newTarget.x = toX;
-		this.newTarget.y = toY;
-		this.newTarget.idx = toX + (toY * this.mapRenderer.grid.w);
+		this.forceStop = true;
 	}
 }
 
 GamePlayer.prototype.logic = function()
 {
-	if (this.target !== undefined) {
-		this.move();
+	var order = this.orders.pop();
+
+	if (order !== undefined) {
+		switch (order.type) {
+			case 'target' :
+				this.target = order;
+				break;
+		}
 	}
+	
+	this.move();
+}
+
+GamePlayer.prototype.move = function()
+{
+	if (this.target === undefined) {
+		return;
+	}
+	
+	if (this.pathFollower === undefined) {
+		
+		this.pathFollower = this.mapRenderer.findPath(this, this.target);
+		
+		if (this.pathFollower.path.length !== 0) {
+
+			this.target.dirty = false;
+			
+			this.pathNext    = this.pathFollower.path.pop();
+			this.pathNext.x *= tileSize;
+			this.pathNext.y *= tileSize;
+		}
+	}
+	
+	if (this.pathNext === undefined) {
+		return this._moveStop();
+	}
+
+	this.isMoving = true;
+
+	var newWorldX = this.worldX + this.speed * Math.cos(this.angle);
+    var newWorldY = this.worldY + this.speed * Math.sin(this.angle);
+
+    var dx = this.pathNext.x - newWorldX;
+    var dy = this.pathNext.y - newWorldY;
+ 
+    if ((dx * dx) + (dy * dy) < (this.speed * this.speed)) {
+
+    	this.worldX = this.pathNext.x;
+		this.worldY = this.pathNext.y;
+		
+		this.x = this.worldX >> tileShift;
+		this.y = this.worldY >> tileShift;
+		
+		this.idx = this.x + (this.y * this.mapRenderer.grid.w);
+		
+		this._checkForStop();
+		
+		this._checkForEvents();
+		
+		this._checkForNewTarget();
+		
+		if (this.pathFollower !== undefined) { // check for sure if moving is stopped
+			this.pathNext = this.pathFollower.path.pop(); // next path
+			if (this.pathNext !== undefined) {
+				this.pathNext.x *= tileSize;
+				this.pathNext.y *= tileSize;
+			}
+		}
+		
+    } else {
+    	
+    	this.worldX = newWorldX;
+    	this.worldY = newWorldY;
+    	
+    	this._calcAngle(dx, dy);
+    }
+}
+
+GamePlayer.prototype._calcAngle = function(dx, dy)
+{
+	this.angle = Math.atan2(dy, dx);
+}
+
+GamePlayer.prototype._checkForStop = function()
+{
+	if (this.forceStop === true) {
+		this._moveStop();
+	}
+}
+
+GamePlayer.prototype._checkForNewTarget = function()
+{
+	if (this.target === undefined
+		|| this.target.dirty === false
+	) {
+		return;
+	}
+
+	var pathFollower = this.mapRenderer.findPath(this, this.target);
+
+	if (pathFollower.path.length) {
+		this.pathFollower = pathFollower;
+	}
+}
+
+GamePlayer.prototype._moveStop = function()
+{
+	this.pathFollower = undefined;
+	this.pathNext     = undefined;
+	this.target       = undefined;
+	this.forceStop    = false;
+	this.isMoving     = false;
+	
+	return true;
 }
 
 GamePlayer.prototype.render = function()
 {
-	ctx.save();
+	/*ctx.save();
     ctx.beginPath();
     ctx.arc(this.worldX + tileSize / 2, this.worldY + tileSize / 2, tileSize / 4, 0, 2 * Math.PI);
     ctx.fillStyle = 'red';
@@ -156,10 +181,32 @@ GamePlayer.prototype.render = function()
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'black';
     ctx.stroke();
-    ctx.restore();
+    ctx.restore();*/
     
+	var cx = this.worldX + tileSize / 2;
+	var cy = this.worldY + tileSize / 2;
+	
+	ctx.save();
+	ctx.translate(cx, cy);
+	ctx.rotate(this.angle);
+	ctx.translate(-cx, -cy);
+	ctx.fillStyle = 'green';
+	//ctx.beginPath();
+	//ctx.rect(this.worldX, this.worldY, tileSize, tileSize);
+	//ctx.stroke();
+	ctx.fillRect(this.worldX, this.worldY + tileSize / 4, tileSize / 2 + 1, tileSize / 2 + 1);
+	ctx.beginPath();
+	ctx.moveTo(cx, cy - tileSize / 2);
+	ctx.lineTo(cx + tileSize / 2, cy);
+	ctx.lineTo(cx, cy + tileSize / 2);
+	ctx.fill();
+	ctx.restore();
+	
 	/*ctx.save();
 	ctx.fillStyle = 'red';
+	ctx.translate(cx, cy);
+	ctx.rotate(this.angle);
+	ctx.translate(-cx, -cy);
 	ctx.fillRect(this.worldX, this.worldY, tileSize, tileSize);
 	ctx.restore();*/
 	
@@ -170,29 +217,50 @@ GamePlayer.prototype.render = function()
 	}
 }
 
-GamePlayer.prototype.checkEvents = function()
+GamePlayer.prototype._checkForEvents = function()
 {
-	var events = this.mapRenderer.grid.events[this.target.idx], type, event;
+	var idx;
 	
-	if (events !== undefined) {
-		for (type in events) {
-			event = events[type];
-			switch (type) {
-				case 'teleport' :
-					var data = event.data.split(',');
-					if (data[2]) {
-						this.mapRenderer.setMap(data[2], function (map) {
-							map.scene.player.setMapCoords(data[0], data[1]);
-						});
-					} else {
-						this.setMapCoords(data[0], data[1]);
-					}
-					break;
-				case 'exit' :
-					alert(event.data);
-					gameManager.currentState.done = true;
-					break;
+	if (this.x === this.target.x && this.y === this.target.y) {
+		this._triggerEvents(this.mapRenderer.grid.events[this.idx], false);
+	} else {
+		this._triggerEvents(this.mapRenderer.grid.events[this.idx], true);
+	}
+}
+
+GamePlayer.prototype._triggerEvents = function (events, onEachStep)
+{
+	if (events === undefined) {
+		return;
+	}
+	
+	var type, event, params, data;
+	
+	for (type in events) {
+		params = events[type];
+		event  = EVENT_TYPES[type];
+		if (onEachStep) {
+			if (event.onEachStep === undefined || event.onEachStep === false) {
+				continue;
 			}
+		}
+		switch (type) {
+			case 'teleport' :
+				this._moveStop();
+				inputManager.pressed['mouse'] = false;
+				data = params.data.split(',');
+				if (data[2]) {
+					this.mapRenderer.setMap(data[2], function (map) {
+						map.scene.player.setMapCoords(data[0], data[1]);
+					});
+				} else {
+					this.setMapCoords(data[0], data[1]);
+				}
+				break;
+			case 'exit' :
+				alert(params.data);
+				gameManager.currentState.done = true;
+				break;
 		}
 	}
 }

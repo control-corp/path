@@ -51,8 +51,6 @@ GameStatePlay.prototype.render = function()
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	ctx.translate(-gameCamera.x, -gameCamera.y);
-    
     if (this.mapRenderer.mapIsLoaded === false) {
 		this.mapRenderer.renderLoading();
 	} else {

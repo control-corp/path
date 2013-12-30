@@ -16,6 +16,8 @@ function GameInputManager()
 	
 	this.mouseX = 0;
 	this.mouseY = 0;
+	this.mouseRealX = 0;
+	this.mouseRealY = 0;
 }
 
 GameInputManager.prototype.onKeyDown = function(e)
@@ -108,6 +110,9 @@ GameInputManager.prototype.calcMouseCoords = function(e, isTouch)
 
 	var wx = ex - rect.left - left + (gameCamera ? (gameCamera.x || 0) : 0);
 	var wy = ey - rect.top - top + (gameCamera ? (gameCamera.y || 0) : 0);
+	
+	this.mouseRealX = wx;
+	this.mouseRealY = wy;
 	
 	this.mouseX = wx >> tileShift;
 	this.mouseY = wy >> tileShift;

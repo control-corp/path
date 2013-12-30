@@ -44,7 +44,10 @@ GameMap.prototype.setMap = function(map, onLoad)
 
 GameMap.prototype.findPath = function(from, to)
 {
-	var path = [];
+	var pathFollower = {
+		path     : [], 
+		modified : false
+	};
 	
 	if (to === undefined 
 		|| to.x < 0 
@@ -56,7 +59,7 @@ GameMap.prototype.findPath = function(from, to)
 		|| this.grid.collision[to.y][to.x] === 1
 		|| (from.x == to.x && from.y == to.y)
 	) {
-		return path;
+		return pathFollower;
 	}
 
 	globalData.paths++;
@@ -128,11 +131,27 @@ GameMap.prototype.render = function()
 	
 	ctx.save();
 	
+	ctx.translate(-gameCamera.x, -gameCamera.y);
+    
 	objects.forEach(function (obj) {
 		if (obj.render && typeof obj.render === 'function') {
 			obj.render();
 		}
 	});
+	
+	if (this.scene.player.target !== undefined) {
+		var tx = this.scene.player.target.x * tileSize;
+		var ty = this.scene.player.target.y * tileSize;
+		ctx.save();
+	    ctx.beginPath();
+	    ctx.arc(tx + tileSize / 2, ty + tileSize / 2, tileSize / 4, 0, 2 * Math.PI);
+	    ctx.fillStyle = 'red';
+	    ctx.fill();
+	    ctx.lineWidth = 2;
+	    ctx.strokeStyle = 'black';
+	    ctx.stroke();
+	    ctx.restore();
+	}
 
 	ctx.restore();
 	
