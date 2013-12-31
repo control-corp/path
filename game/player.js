@@ -31,6 +31,12 @@ GamePlayer.prototype.setTarget = function(x, y)
 		return;
 	}
 	
+	if (this.mapRenderer.grid.collision[y] === undefined
+		|| this.mapRenderer.grid.collision[y][x] === undefined
+		|| this.mapRenderer.grid.collision[y][x] === 1) {
+		return;
+	}
+	
 	this.orders.push({
 		type  : 'target',
 		x     : x, 

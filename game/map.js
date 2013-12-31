@@ -138,8 +138,12 @@ GameMap.prototype.render = function()
 			obj.render();
 		}
 	});
-	
-	if (this.scene.player.target !== undefined) {
+
+	if (this.scene.player.target !== undefined
+		&& this.grid.collision[this.scene.player.target.y] !== undefined
+		&& this.grid.collision[this.scene.player.target.y][this.scene.player.target.x] !== undefined
+		&& this.grid.collision[this.scene.player.target.y][this.scene.player.target.x] === 0
+	) {
 		var tx = this.scene.player.target.x * tileSize;
 		var ty = this.scene.player.target.y * tileSize;
 		ctx.save();
