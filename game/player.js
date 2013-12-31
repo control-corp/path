@@ -219,6 +219,10 @@ GamePlayer.prototype.render = function()
 
 GamePlayer.prototype._checkForEvents = function()
 {
+	if (this.target === undefined || this.target.idx !== this.idx) {
+		return;
+	}
+	
 	this._triggerEvents(this.mapRenderer.grid.events[this.idx]);
 }
 

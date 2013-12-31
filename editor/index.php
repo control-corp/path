@@ -79,7 +79,7 @@
             </div>
         </div>
 		<div id="viewport" class="mapPanel">
-		    <canvas id="canvas"></canvas>
+		    <canvas id="canvas" width="640" height="480"></canvas>
 		</div>
     </body>
 </html>

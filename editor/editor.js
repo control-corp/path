@@ -1,3 +1,36 @@
+function handleKeys()
+{
+	if (grid === undefined) {
+		return;
+	}
+	
+	if (!Keyboard.pressed['Left'] && !Keyboard.pressed['Right'] && !Keyboard.pressed['Up'] && !Keyboard.pressed['Down']) {
+		return;
+	}
+	
+	var step = 32;
+	
+	if (Keyboard.pressed['Left']) {
+		screenOffsetX -= step;
+	}
+	
+	if (Keyboard.pressed['Right']) {
+		screenOffsetX += step;
+	}
+	
+	if (Keyboard.pressed['Up']) {
+		screenOffsetY -= step;
+	}
+	
+	if (Keyboard.pressed['Down']) {
+		screenOffsetY += step;
+	}
+
+	if (Keyboard.pressed['Left'] || Keyboard.pressed['Right'] || Keyboard.pressed['Up'] || Keyboard.pressed['Down']) {
+		drawMap();
+	}
+}
+
 function handleInput(mouseMove)
 {
 	if (grid === undefined || mouseX < 0 || mouseY < 0 || mouseX >= grid.w || mouseY >= grid.h) {
@@ -143,9 +176,14 @@ function GameMapObject()
 				break;
 			case 'coords' :
 				drawTextBG(
-					this.x + ',' + this.y, 
+					this.x, 
 					this.worldX, 
 					this.worldY
+				);
+				drawTextBG(
+					this.y, 
+					this.worldX, 
+					this.worldY + 10
 				);
 				break;
 			case 'collision' :
@@ -153,6 +191,7 @@ function GameMapObject()
 				ctx.strokeStyle = 'red';
 				ctx.lineWidth = 3;
 				ctx.rect(this.worldX, this.worldY, tileSize, tileSize);
+				ctx.closePath();
 				ctx.stroke();
 				break;
 			case 'events' :
@@ -190,6 +229,7 @@ function GameMapObject()
 				ctx.globalAlpha = 0.5;
 				ctx.lineWidth = 1;
 				ctx.rect(this.worldX, this.worldY, tileSize, tileSize);
+				ctx.closePath();
 				ctx.stroke();
 				break;
 		}
@@ -300,14 +340,31 @@ function drawMap(map)
     objects.sort(sortZIndex);
 
 	ctx.save();
+	
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.font = '8px Verdana';
-	ctx.translate(0, 0);
+	
+	ctx.font = '10px Verdana';
+	
+	ctx.translate(-screenOffsetX, -screenOffsetY);
+
+	var wx = grid.w * tileSize;
+	var wy = grid.h * tileSize;
+	
+	ctx.save();
+	ctx.strokeStyle = 'black';
+	ctx.beginPath();
+	ctx.rect(-10, -10, wx + 20, wy + 20);
+	ctx.lineWidth = 1;
+	ctx.stroke();
+	ctx.closePath();
+	ctx.restore();
+	
 	objects.forEach(function (obj) {
 		if (obj.render && typeof obj.render === 'function') {
 			obj.render();
 		}
 	});
+
 	ctx.restore();
 }
 
@@ -318,20 +375,11 @@ function showInfo()
 	}
 	
 	var obj, event, idx;
-	////////////////////////////////////////////////////////// = le
-	for (y = 0, h = grid.h; y < h; y++) {
-    	for (x = 0, w = grid.w; x < w; x++) {
-    		wx = x * tileSize;
-			wy = y * tileSize;
-			if (mouseX === x && mouseY === y) {
-				idx = x + (y * w);
-				obj = this.grid.objects[idx];
-				event = this.grid.events[idx];
-				y = h;
-				break;
-			}
-    	}
-    }
+	
+	idx = mouseX + (mouseY * grid.w);
+	
+	obj   = this.grid.objects[idx];
+	event = this.grid.events[idx];
 	
 	if (event !== undefined) {
 		$('#infoEvents').html('Events in cell: ' + JSON.stringify(event));
@@ -349,11 +397,10 @@ function showInfo()
 function loadMap(map)
 {
 	$.getJSON('../game/maps/' + map + '?r=' + new Date().getTime(), function (data) {
-		$('select[name="map"]').val(map);
-		canvas.width  = (data.w * tileSize);
-		canvas.height = (data.h * tileSize);
+		screenOffsetX = defaultSOX;
+		screenOffsetY = defaultSOY;
 		drawMap(data);
-		$('select[name="map"]').val(map); ////////////////////////////////////////////
+		$('select[name="map"]').val(map);
 		$('.mapPanel').show();
 	});
 }
@@ -448,6 +495,8 @@ $(document).ready(function () {
 				grid.collision[y][x] = 0;
 			}
 		}
+		screenOffsetX = defaultSOX;
+		screenOffsetY = defaultSOY;
 		drawMap();
 	});
 	

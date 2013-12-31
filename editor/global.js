@@ -19,6 +19,12 @@ var SELECTED_EVENT_TYPE  = 'teleport';
 var SHOW_COORDS          = 0;
 var SHOW_COUNT_OBJECTS   = 0;
 
+var defaultSOX = -tileSize;
+var defaultSOY = -tileSize;
+
+var screenOffsetX = defaultSOX;
+var screenOffsetY = defaultSOY;
+
 function registerInputs()
 {
 	$(canvas).bind('mousedown', function (e) {
@@ -61,10 +67,12 @@ function registerInputs()
 	
 	$(document).bind('keydown', function (e) { 
 		Keyboard.pressed[e.key] = true;
+		handleKeys();
 	});
 	
 	$(document).bind('keyup', function (e) { 
 		Keyboard.pressed[e.key] = false;
+		handleKeys();
 	});
 }
 
@@ -75,8 +83,8 @@ function calcMouseCoords(e)
 	var top  = (doc && doc.scrollTop || body && body.scrollTop || 0);
 	var pos  = canvas.getBoundingClientRect();
 
-	var wx = e.pageX - pos.left - left;
-	var wy = e.pageY - pos.top - top;
+	var wx = e.pageX - pos.left - left + screenOffsetX;
+	var wy = e.pageY - pos.top - top + screenOffsetY;
 	
 	mouseScreenX = wx;
 	mouseScreenY = wy;
